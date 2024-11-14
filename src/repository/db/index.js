@@ -23,6 +23,9 @@ export default class Repository{
     {
         this.#name = model.name
         this.myContext=()=>context.db(this.#name)
+        this.resetContext=()=>{
+            this.myContext=()=>context.db(this.#name)
+        }
         this.modelInstance=(m={})=>new model(m)
     }
 

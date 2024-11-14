@@ -13,7 +13,10 @@ export default class Context{
         return this.#db.transaction().then(trx=>{
             repositories.forEach(repo=>repo.context = trx)
 
-            return trx
+            return {
+                done:()=>trx.commit().then(()=>repositories.forEach(repo=>repo.resetContext())),
+                rollback:()=>trx.rollback().then(()=>repositories.forEach(repo=>repo.resetContext()))
+            }
         })
     }
 
