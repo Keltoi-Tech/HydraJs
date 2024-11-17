@@ -9,4 +9,8 @@ export default class Model{
 
     get entity(){return {}}
 
+    static build(key={}){
+        return new Model(key)
+    }
+
 }

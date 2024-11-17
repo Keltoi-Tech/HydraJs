@@ -18,7 +18,6 @@ export default class Repository{
         return array.length ? array.map(modeling) : []
     }
 
-
     constructor(model=Model,context=new Context())
     {
         this.#name = model.name
@@ -26,7 +25,7 @@ export default class Repository{
         this.resetContext=()=>{
             this.myContext=()=>context.db(this.#name)
         }
-        this.modelInstance=(m={})=>new model(m)
+        this.modelInstance=(m={})=>model.build(m)
     }
 
     set context(value=knex()){ this.myContext=()=>value(this.#name)}
