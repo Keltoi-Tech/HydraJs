@@ -1,6 +1,6 @@
 {
   "name": "@keltoi/hydra",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Boilerplate to start your API from zero using Repository Pattern",
   "main": "index.js",
   "scripts": {
