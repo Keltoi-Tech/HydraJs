@@ -52,7 +52,7 @@ export default class Repository{
         this.myContext()
        .where(key)
        .first()
-       .then(Repository.anyOrError)
+       .then(model=>Repository.anyOrError(model,{code:404,message:'Not found'}))
        .then(this.modelInstance) 
 
     list=()=>
