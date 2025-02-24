@@ -13,18 +13,25 @@ export default class Context{
         return this.#db.transaction().then(trx=>{
             repositories.forEach(repo=>repo.context = trx)
 
+            const clean =()=>repositories.forEach(repo=>
+                repo.resetContext()
+            )
+
             return {
-                done:()=>trx.commit().then(()=>repositories.forEach(repo=>repo.resetContext())),
-                rollback:()=>trx.rollback().then(()=>repositories.forEach(repo=>repo.resetContext()))
+                done:()=>trx.commit().then(clean),
+                rollback:()=>trx.rollback().then(clean)
             }
         })
     }
 
-    static instance(database=knex()){return new Context(database)}
+    static instance(database=knex()){ return new Context(database) }
 
     async terraform(models=[]){
         const promises = models.map(async model=>{
-            const exists = await this.#db.schema.hasTable(model.name)
+            const exists = await this.#db
+                .schema
+                .hasTable(model.name)
+                
             if (!exists) await model.makeMe(this.#db)
         })
 
