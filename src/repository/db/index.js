@@ -18,18 +18,20 @@ export default class Repository{
         return array.length ? array.map(modeling) : []
     }
 
-
     constructor(model=Model,context=new Context())
     {
         this.#name = model.name
+
         this.myContext=()=>context.db(this.#name)
+
         this.resetContext=()=>{
             this.myContext=()=>context.db(this.#name)
         }
-        this.modelInstance=(m={})=>new model(m)
+
+        this.modelInstance=(m={})=>model.build(m)
     }
 
-    set context(value=knex()){ this.myContext=()=>value(this.#name)}
+    set context(value=knex()){ this.myContext=()=>value(this.#name) }
 
     insert=(model=new Model())=>
         this.myContext()
@@ -53,7 +55,7 @@ export default class Repository{
         this.myContext()
        .where(key)
        .first()
-       .then(Repository.anyOrError)
+       .then(model=>Repository.anyOrError(model,{code:404,message:'Not found'}))
        .then(this.modelInstance) 
 
     list=()=>
