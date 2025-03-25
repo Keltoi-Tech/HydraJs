@@ -21,14 +21,17 @@ export default class Repository{
     constructor(model=Model,context=new Context())
     {
         this.#name = model.name
+
         this.myContext=()=>context.db(this.#name)
+
         this.resetContext=()=>{
             this.myContext=()=>context.db(this.#name)
         }
+
         this.modelInstance=(m={})=>model.build(m)
     }
 
-    set context(value=knex()){ this.myContext=()=>value(this.#name)}
+    set context(value=knex()){ this.myContext=()=>value(this.#name) }
 
     insert=(model=new Model())=>
         this.myContext()
