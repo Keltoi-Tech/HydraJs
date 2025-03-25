@@ -10,28 +10,29 @@ export default class LoggedRepository extends Repository{
     deceased=()=>this.myContext()
         .where({active:false})
         .select()
-        .then(deads=>deads.map(this.modelInstance))
+        .then(result=>Repository.setOrEmpty(result,this.modelInstance))
 
     get=(key={})=>this.myContext()
         .where({...key,active:true})
         .first()
+        .then(model=>Repository.anyOrError(model,{code:404,message:'Not found'}))
         .then(this.modelInstance)
 
     before=(date=new Date())=>this.myContext()
         .where('createdAt','<',date.toISOString())
         .select()
-        .then(result=>result.map(this.modelInstance))
+        .then(result=>Repository.setOrEmpty(result,this.modelInstance))
 
     after=(date=new Date())=>this.myContext()
         .where('createdAt','>',date.toISOString())
         .select()
-        .then(result=>result.map(this.modelInstance))
+        .then(result=>Repository.setOrEmpty(result,this.modelInstance))
 
     list=()=>this.myContext()
         .select()
         .orderBy('createdAt','updatedAt')
         .where({active:true})
-        .then(result=>result.map(this.modelInstance))
+        .then(result=>Repository.setOrEmpty(result,this.modelInstance))
 
     update=(model=new Logged())=>
         this.myContext()

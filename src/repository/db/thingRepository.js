@@ -10,5 +10,5 @@ export default class ThingRepository extends Repository{
     getByName=(name='')=>this.myContext()
         .where({name})
         .select()
-        .then(model=>this.modelInstance(model))
+        .then(result=>Repository.setOrEmpty(result,this.modelInstance))
 }
