@@ -1,6 +1,6 @@
-const { default: Context } = require("../repository/db/context");
+import Context from "../repository/db/context";
 
-class Handler {
+export default class Handler {
     #context
     constructor({ context = new Context }) {
         this.#context = context;
@@ -15,5 +15,3 @@ class Handler {
         return Promise.reject({ code, message });
     }
 }
-
-module.exports = Handler
