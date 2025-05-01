@@ -1,4 +1,4 @@
-import knex from "knex"
+import knex, { TableBuilder } from "knex"
 import Model from "./index.js"
 
 export default class Logged extends Model{
@@ -18,7 +18,7 @@ export default class Logged extends Model{
     static makeMe(
         db=knex(),
         model=Logged,
-        schema=(t=new knex.TableBuilder())=>{}
+        schema=(t=new TableBuilder())=>{}
     ){
         return db.schema
             .createTable(

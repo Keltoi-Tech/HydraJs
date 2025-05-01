@@ -1,4 +1,4 @@
-import knex from "knex";
+import knex, { TableBuilder } from "knex";
 import Model from "./index.js";
 
 
@@ -22,7 +22,7 @@ export default class Thing extends Model{
     static makeMe(
         db=knex(),
         thing=Thing,
-        schema=(t=new knex.TableBuilder())=>{}
+        schema=(t=new TableBuilder())=>{}
     ){
         return db.schema
             .createTable(
