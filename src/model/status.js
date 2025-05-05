@@ -1,5 +1,7 @@
 import knex, { TableBuilder } from "knex"
 import Model from "."
+import runWhenTrue from "../helper/runWhenTrue"
+import runWhenFalse from "../helper/runWhenFalse"
 
 export default class Status extends Model{
     #description=''
@@ -11,8 +13,9 @@ export default class Status extends Model{
         model=Status, 
         schema=(t=new TableBuilder())=>{} 
     ){
-        return db.schema
-            .createTable(
+        return runWhenFalse(
+            db.schema.hasTable(model.name),
+            ()=>db.schema.createTable(
                 model.name,
                 table=>{
                     table.increments()
@@ -25,6 +28,7 @@ export default class Status extends Model{
                     schema(table)
                 }
             )
+        )
     }
 
     constructor({ id=1, description=''}){

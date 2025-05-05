@@ -1,5 +1,8 @@
-import knex, { TableBuilder } from "knex"
+import knex, { Knex, TableBuilder } from "knex"
 import Model from "./index.js"
+import createTableIfNotExists from "../helper/runWhenTrue.js"
+import runWhenTrue from "../helper/runWhenTrue.js"
+import runWhenFalse from "../helper/runWhenFalse.js"
 
 export default class Logged extends Model{
     #createdAt=new Date()
@@ -10,7 +13,7 @@ export default class Logged extends Model{
     }){
         super(key)
         this.#createdAt = createdAt
-    }
+    } 
 
     get createdAt(){ return this.#createdAt }
     set createdAt(value = new Date()){ this.createdAt = value }
@@ -20,8 +23,9 @@ export default class Logged extends Model{
         model=Logged,
         schema=(t=new TableBuilder())=>{}
     ){
-        return db.schema
-            .createTable(
+        return runWhenFalse(
+            db.schema.hasTable(model.name),
+            ()=>db.schema.createTable(
                 model.name,
                 table=>{
                     schema(table)
@@ -31,5 +35,6 @@ export default class Logged extends Model{
                         .defaultTo(db.fn.now())
                 }
             )
+        )
     }
 }

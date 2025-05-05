@@ -1,5 +1,7 @@
 import knex, { TableBuilder } from "knex";
 import Model from "./index.js";
+import runWhenFalse from "../helper/runWhenFalse.js";
+import runWhenTrue from "../helper/runWhenTrue.js";
 
 
 export default class Thing extends Model{
@@ -22,17 +24,20 @@ export default class Thing extends Model{
     static makeMe(
         db=knex(),
         thing=Thing,
+        size = 255,
         schema=(t=new TableBuilder())=>{}
     ){
-        return db.schema
-            .createTable(
+        return runWhenFalse(
+            db.schema.hasTable(thing.name),
+            ()=>db.schema.createTable(
                 thing.name,
                 table=>{
                     schema(table)
 
-                    table.string(255)
+                    table.string(size)
                         .notNullable()
                 }
             )
+        )
     }
 }

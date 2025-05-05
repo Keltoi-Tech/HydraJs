@@ -1,56 +1,58 @@
 import Logged from '../../model/logged.js';
-import Traced from '../../model/traced.js';
 import Context from './context.js';
 import Repository from './index.js';
 
-export default class TracedRepository extends Repository{
-    constructor(model=Traced,context=new Context()){
+export default class LoggedRepository extends Repository{
+    constructor(model=Logged,context=new Context()){
         super(model,context)
     }
 
-    deceased=()=>this.myContext()
-        .where({active:false})
-        .select()
-        .then(result => Repository.setOrEmpty(result,this.modelInstance))
-
-    get=(key={})=>this.myContext()
-        .where({...key,active:true})
-        .first()
-        .then(model => Repository.anyOrError(model,{code:404,message:'Not found'}))
-        .then(this.modelInstance)
-
-    before=(date=new Date())=>this.myContext()
-        .where('createdAt','<',date.toISOString())
-        .select()
-        .then(result => Repository.setOrEmpty(result,this.modelInstance))
-
-    after=(date=new Date())=>this.myContext()
-        .where('createdAt','>',date.toISOString())
-        .select()
-        .then(result => Repository.setOrEmpty(result,this.modelInstance))
-
-    list=()=>this.myContext()
-        .select()
-        .orderBy('createdAt','updatedAt')
-        .where({active:true})
-        .then(result => Repository.setOrEmpty(result,this.modelInstance))
-
-    update=(model=new Logged())=>
+    get = (logged = new Logged())=>
         this.myContext()
-        .where(model.key)
-        .update({
-            ...model.entity,
-            updatedAt:new Date().toISOString()
-        })
-        .then(affected => affected > 0)
+            .where({...logged.key})
+            .first()
+            .then(model => Repository.anyOrError(model,{code:404,message:'Not found'}))
+            .then(this.Entity.build)
 
-    delete=(key={})=>
+    before = (date = new Date(), order = 'asc')=>
         this.myContext()
-        .where(key)
-        .update({
-            active:false,
-            updatedAt:new Date().toISOString()
-        })
-        .then(affected => affected > 0)
+            .where('createdAt','<',date.toISOString())
+            .select()
+            .orderBy('createdAt',order)
+            .then(result => Repository.setOrEmpty(result,this.Entity.build))
+
+    after = (date = new Date(), order = 'asc')=>
+        this.myContext()
+            .where('createdAt','>',date.toISOString())
+            .select()
+            .orderBy('createdAt',order)
+            .then(result => Repository.setOrEmpty(result,this.Entity.build))
+
+    list = (order='asc')=>
+        this.myContext()
+            .select()
+            .orderBy('createdAt',order)
+            .then(result => Repository.setOrEmpty(result,this.Entity.build))
+
+    insert = (logged = new Logged())=>
+        this.myContext()
+            .insert({
+                ...logged.entity,
+                createdAt:new Date().toISOString()  
+            },Object.keys(logged.key))
+            .then(ids => logged.key = ids[0])
+            .then(() => logged)
+
+    create = (logged = new Logged())=>
+        this.myContext()
+            .insert({
+                ...logged.entity,
+                createdAt:new Date().toISOString() 
+            })
+            .then(() => logged)
+
+    update = ()=> Promise.reject(new Error('Cannot update a logged object'))
+
+    delete = ()=> Promise.reject(new Error('Cannot delete a logged object'))
     
 }

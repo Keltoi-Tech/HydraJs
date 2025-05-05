@@ -27,13 +27,9 @@ export default class Context{
     static instance(database=knex()){ return new Context(database) }
 
     async terraform(models=[]){
-        const promises = models.map(async model=>{
-            const exists = await this.#db
-                .schema
-                .hasTable(model.name)
-                
-            if (!exists) await model.makeMe(this.#db)
-        })
+        const promises = models.map(async model=>model.makeMe(this.#db))
+
+        console.log('Terraforming...')
 
         await Promise.all(promises)
     }

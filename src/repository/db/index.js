@@ -8,6 +8,8 @@ export default class Repository{
 
     myContext
 
+    Entity = Model
+
     static anyOrError(model,err={code:0,message:''}){
         if (!!model) return model
 
@@ -28,46 +30,48 @@ export default class Repository{
             this.myContext=()=>context.db(this.#name)
         }
 
-        this.modelInstance=(m={})=>model.build(m)
+        this.Entity = model
     }
 
     set context(value=knex()){ this.myContext=()=>value(this.#name) }
 
-    create = (model=new Model())=>
+    create = (model = new Model())=>
         this.myContext()
-        .insert({
-            ...model.key, 
-            ...model.entity
-        })
-        .then(()=>model)
+            .insert({
+                ...model.key, 
+                ...model.entity
+            })
+            .then(()=>model)
 
-    insert = (model=new Model())=>
+    insert = (model = new Model())=>
         this.myContext()
-        .insert(model.entity,Object.keys(model.key))
-        .then(ids=>model.key = ids[0])
-        .then(()=>model)
+            .insert(model.entity,Object.keys(model.key))
+            .then(ids=>{
+                model.key = ids[0]
+                return model
+            })
 
-    update = (model=new Model())=>
+    update = (model = new Model())=>
         this.myContext()
-        .where(model.key)
-        .update(model.entity)
-        .then(affected=>affected > 0)
+            .where(model.key)
+            .update(model.entity)
+            .then(affected=>affected > 0)
 
-    delete = (key={})=>
+    delete = (model = new Model())=>
         this.myContext()
-        .where(key)
-        .del()
-        .then(affected=>affected > 0)
+            .where(model.key)
+            .del()
+            .then(affected=>affected > 0)
 
-    get = (key={})=>
+    get = (model = new Model())=>
         this.myContext()
-       .where(key)
-       .first()
-       .then(model=>Repository.anyOrError(model,{code:404,message:'Not found'}))
-       .then(this.modelInstance) 
+            .where(model.key)
+            .first()
+            .then(model=>Repository.anyOrError(model,{code:404,message:'Not found'}))
+            .then(this.Entity.build) 
 
     list = ()=>
         this.myContext()
-        .select()
-        .then(result=>Repository.setOrEmpty(result,this.modelInstance))
+            .select()
+            .then(result=>Repository.setOrEmpty(result,this.Entity.build))
 }

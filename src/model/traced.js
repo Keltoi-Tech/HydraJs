@@ -1,5 +1,4 @@
 import knex, { TableBuilder } from "knex"
-import Model from "./index.js"
 import Logged from "./logged.js"
 
 export default class Traced extends Logged{
@@ -10,8 +9,8 @@ export default class Traced extends Logged{
         key={},
         createdAt=new Date(),
         updatedAt=new Date()|undefined,
-        active=true}
-    ){
+        active=true
+    }){
         super({ key,createdAt })
         this.#active=active
         this.#updatedAt = updatedAt
@@ -32,22 +31,14 @@ export default class Traced extends Logged{
         model=Traced,
         schema=(t=new TableBuilder())=>{}
     ){
-        return db.schema
-            .createTable(
-                model.name,
-                table=>{
-                    schema(table)
+        return super.makeMe(db,model,table=>{
+            schema(table)
 
-                    table.dateTime('createdAt')
-                        .notNullable()
-                        .defaultTo(db.fn.now())
+            table.dateTime('updatedAt')
+                .nullable()
 
-                    table.dateTime('updatedAt')
-                        .nullable()
-
-                    table.boolean('active')
-                        .defaultTo(true)
-                }
-            )
+            table.boolean('active')
+                .defaultTo(true)
+        })
     }
 }

@@ -14,6 +14,8 @@ import ApiRepository from './repository/api/index.js'
 import ApiRestRepository from './repository/api/restRepository.js'
 import Service from './service/index.js'
 import Handler from './handler/index.js'
+import runWhenTrue from './helper/runWhenTrue.js'
+import runWhenFalse from './helper/runWhenFalse.js'
 
 export {
     Model,
@@ -31,5 +33,7 @@ export {
     ApiRepository,
     ApiRestRepository,
     Service,
-    Handler
+    Handler,
+    runWhenTrue,
+    runWhenFalse
 }
