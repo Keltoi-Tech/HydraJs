@@ -7,51 +7,63 @@ export default class TracedRepository extends Repository{
         super(model,context)
     }
 
-    deceased = (order = 'asc')=>
+    deceased = (order = 'asc') =>
         this.myContext()
             .where({active:false})
             .select()
             .orderBy(['createdAt','updatedAt'],order)
-            .then(result => Repository.setOrEmpty(result,this.Entity.build))
+            .then(result => Repository
+                .setOrEmpty(result,this.Entity.build)
+            )
 
-    before = (date = new Date(), order = 'asc')=>
+    before = (date = new Date(), order = 'asc') =>
         this.myContext()
             .where('createdAt','<',date.toISOString())
             .where({active:true})
             .select()
             .orderBy(['createdAt','updatedAt'],order)
-            .then(result => Repository.setOrEmpty(result,this.Entity.build))
+            .then(result => Repository
+                .setOrEmpty(result,this.Entity.build)
+            )
 
-    after = (date=new Date(), order = 'asc')=>
+    after = (date=new Date(), order = 'asc') =>
         this.myContext()
             .where('createdAt','>',date.toISOString())
             .where({active:true})
             .select()
             .orderBy(['createdAt','updatedAt'],order)
-            .then(result => Repository.setOrEmpty(result,this.Entity.build))
+            .then(result => Repository
+                .setOrEmpty(result,this.Entity.build)
+            )
 
-    list = (order = 'asc')=>
+    list = (order = 'asc') =>
         this.myContext()
             .where({active:true})
             .select()
             .orderBy(['createdAt','updatedAt'],order)
-            .then(result => Repository.setOrEmpty(result,this.Entity.build))
+            .then(result => Repository
+                .setOrEmpty(result,this.Entity.build)
+            )
 
-    last = ()=>
+    last = () =>
         this.myContext()
             .where({active:true})
             .first()
             .orderBy('createdAt',"desc")
-            .then(result => Repository.anyOrError(result,{code:404,message:'Not found'}))
+            .then(result => Repository
+                .anyOrError(result,{code:404,message:'Not found'})
+            )
 
-    first = ()=>
+    first = () =>
         this.myContext()
             .where({active:true})
             .first()
             .orderBy('createdAt',"asc")
-            .then(result => Repository.anyOrError(result,{code:404,message:'Not found'}))
+            .then(result => Repository
+                .anyOrError(result,{code:404,message:'Not found'})
+            )
 
-    insert = (traced=new Traced())=>
+    insert = (traced=new Traced()) =>
         this.myContext()
             .insert({ 
                 ...traced.entity, 

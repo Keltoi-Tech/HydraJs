@@ -1,3 +1,4 @@
+import AppError from "../model/error";
 import Context from "../repository/db/context";
 
 export default class Handler {
@@ -12,6 +13,6 @@ export default class Handler {
 
     handle(){}
     handleError({ code, message }) {
-        return Promise.reject({ code, message });
+        return Promise.reject(new AppError({ code, message }));
     }
 }

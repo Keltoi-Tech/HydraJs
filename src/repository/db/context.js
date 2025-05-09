@@ -29,8 +29,6 @@ export default class Context{
     async terraform(models=[]){
         const promises = models.map(async model=>model.makeMe(this.#db))
 
-        console.log('Terraforming...')
-
         await Promise.all(promises)
     }
 }

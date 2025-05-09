@@ -1,6 +1,5 @@
 import knex, { TableBuilder } from "knex"
 import Model from "."
-import runWhenTrue from "../helper/runWhenTrue"
 import runWhenFalse from "../helper/runWhenFalse"
 
 export default class Status extends Model{

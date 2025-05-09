@@ -1,7 +1,6 @@
 import knex, { TableBuilder } from "knex";
 import Model from "./index.js";
 import runWhenFalse from "../helper/runWhenFalse.js";
-import runWhenTrue from "../helper/runWhenTrue.js";
 
 
 export default class Thing extends Model{

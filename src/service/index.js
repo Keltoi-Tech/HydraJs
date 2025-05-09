@@ -1,3 +1,4 @@
+import AppError from "../model/error"
 import Context from "../repository/db/context"
 
 export default class Service {
@@ -8,6 +9,6 @@ export default class Service {
 
     get context(){return this.#context}    
 
-    handleError = (code,message)=>Promise.reject({code,message})
+    handleError = (code,message)=>Promise.reject(new AppError({code,message}))
     handleFailure = (err)=> this.handleError({code:500,message:err.message})
 }

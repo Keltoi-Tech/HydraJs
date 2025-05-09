@@ -12,7 +12,6 @@ export default class DbLinked {
         this.#name  = link.name
         this.myContext = () => context.db(this.#name)
         this.#linking = link
-        
     }
 
     createBatch = (linkings=[ new Linking() ])=>

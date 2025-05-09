@@ -7,9 +7,11 @@ export default class ThingRepository extends Repository{
         super(model,context)
     }
 
-    getByName=(name='')=>
+    getByName = (name='') =>
         this.myContext()
             .where({name})
             .select()
-            .then(result=>Repository.setOrEmpty(result,this.Entity.build))
+            .then(result=>Repository
+                .setOrEmpty(result,this.Entity.build)
+            )
 }

@@ -1,7 +1,5 @@
-import knex, { Knex, TableBuilder } from "knex"
+import knex, { TableBuilder } from "knex"
 import Model from "./index.js"
-import createTableIfNotExists from "../helper/runWhenTrue.js"
-import runWhenTrue from "../helper/runWhenTrue.js"
 import runWhenFalse from "../helper/runWhenFalse.js"
 
 export default class Logged extends Model{

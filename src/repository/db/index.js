@@ -1,6 +1,7 @@
 import knex from "knex";
 import Model from "../../model/index.js";
 import Context from "./context.js";
+import AppError from "../../model/error.js";
 
 
 export default class Repository{
@@ -13,7 +14,7 @@ export default class Repository{
     static anyOrError(model,err={code:0,message:''}){
         if (!!model) return model
 
-        throw err;
+        throw new AppError(err);
     }
 
     static setOrEmpty(array=[],modeling=(e)=>e){
@@ -67,11 +68,15 @@ export default class Repository{
         this.myContext()
             .where(model.key)
             .first()
-            .then(model=>Repository.anyOrError(model,{code:404,message:'Not found'}))
+            .then(model=>Repository
+                .anyOrError(model,{code:404,message:'Not found'})
+            )
             .then(this.Entity.build) 
 
     list = ()=>
         this.myContext()
             .select()
-            .then(result=>Repository.setOrEmpty(result,this.Entity.build))
+            .then(result=>Repository
+                .setOrEmpty(result,this.Entity.build)
+            )
 }
