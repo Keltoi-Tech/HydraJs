@@ -1,7 +1,7 @@
 import knex from "knex";
 import Model from "../../model/index.js";
 import Context from "./context.js";
-import AppError from "../../model/error.js";
+import Result from "../../model/result.js";
 
 
 export default class Repository{
@@ -14,7 +14,7 @@ export default class Repository{
     static anyOrError(model,err={code:0,message:''}){
         if (!!model) return model
 
-        throw new AppError(err);
+        throw new Result(err);
     }
 
     static setOrEmpty(array=[],modeling=(e)=>e){

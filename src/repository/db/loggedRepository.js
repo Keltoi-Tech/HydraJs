@@ -1,7 +1,7 @@
-import AbstractError from '../../model/error.js';
 import Logged from '../../model/logged.js';
 import Context from './context.js';
 import Repository from './index.js';
+import Result from '../../model/result.js';
 
 export default class LoggedRepository extends Repository{
     constructor(model=Logged,context=new Context()){
@@ -52,8 +52,8 @@ export default class LoggedRepository extends Repository{
             })
             .then(() => logged)
 
-    update = () => Promise.reject(new AbstractError({code:400,message:'Cannot update a logged object'}))
+    update = () => Promise.reject(new Result({code:400,message:'Cannot update a logged object'}))
 
-    delete = () => Promise.reject(new AbstractError({code:400,message:'Cannot delete a logged object'}))
+    delete = () => Promise.reject(new Result({code:400,message:'Cannot delete a logged object'}))
     
 }

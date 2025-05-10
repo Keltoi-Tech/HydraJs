@@ -1,4 +1,4 @@
-import AppError from './model/error.js'
+import Result from './model/result.js'
 import Traced from './model/traced.js'
 import Logged from './model/logged.js'
 import Model from './model/index.js'
@@ -19,7 +19,7 @@ import runWhenTrue from './helper/runWhenTrue.js'
 import runWhenFalse from './helper/runWhenFalse.js'
 
 export {
-    AppError,
+    Result,
     Model,
     Thing,
     Traced,
