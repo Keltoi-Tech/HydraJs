@@ -1,4 +1,6 @@
 import knex from "knex"
+import Migration from "./migration"
+import { Model } from "../../model"
 
 export default class Context{
     #db
@@ -26,8 +28,17 @@ export default class Context{
 
     static instance(database=knex()){ return new Context(database) }
 
-    async terraform(models=[]){
-        const promises = models.map(async model=>model.makeMe(this.#db))
+    async terraform(models=[Model]){
+        await Migration.structMe(this.#db);
+
+        const migration = new Migration(this.#db)
+
+        const promises = models.map(model=>
+            model.structMe(this.#db)
+                .then(()=>migration
+                    .runMigrations({ entity: model, migrations: model.migrations(this.#db) })
+                )
+        )        
 
         await Promise.all(promises)
     }

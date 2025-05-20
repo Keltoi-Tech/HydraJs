@@ -1,9 +1,9 @@
-import Result from "../model/result";
-import Context from "../repository/db/context";
+import { Result } from "../model";
+import { DbContext } from "../repository/db";
 
-export default class Handler {
+export class Handler {
     #context
-    constructor({ context = new Context }) {
+    constructor({ context = new DbContext }) {
         this.#context = context;
     }
 

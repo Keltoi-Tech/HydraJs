@@ -9,17 +9,21 @@ class Result {
         this.#data = data
     }
 
+    get isError() {
+        return this.#code > 299
+    }
+
     get error() {
         return {
-            code: this.code,
-            message: this.message
+            code: this.#code,
+            message: this.#message
         }
     }
 
     get ok() {
         return {
-            code: this.code,
-            data: this.data
+            code: this.#code,
+            data: this.#data
         }
     }
 

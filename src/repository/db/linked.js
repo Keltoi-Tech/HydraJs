@@ -1,11 +1,12 @@
 
-import Model from "../../model/index";
-import Linking from "../../model/linking";
 import Context from "./context";
+import { Entity, Linking, Result } from "../../model";
+
 
 export default class DbLinked {
     #linking
     #name=''
+
     myContext
 
     constructor(link=Linking,context=new Context){
@@ -24,18 +25,20 @@ export default class DbLinked {
                     })
                 )
             )
-            .then(()=>linkings)
+            .then(()=>new Result({data:linkings}))
+            .catch(err=>Promise.reject(new Result({code:500,message:err})));
 
-    create = (linked=new Linking())=>
+    create = (linked=new Linking())=>   
         this.myContext()
             .insert({
                 ...linked.key,
                 ...linked.entity
             })
-            .then(()=>linked);
+            .then(()=>new Result({data:linked}))
+            .catch(err=>Promise.reject(new Result({code:500,message:err})));
     
 
-    insertOrdinatesByAbscissa = ({ abscissa=new Model(),ordinates=[new Model()] })=>{
+    insertOrdinatesByAbscissa = ({ abscissa=new Entity(),ordinates=[new Entity()] })=>{
         const batch = ordinates
             .map(o=>this.#linking
                 .build({abscissa,ordinate:o})
@@ -44,7 +47,7 @@ export default class DbLinked {
         return this.createBatch(batch);
     }
 
-    insertAbscissasByOrdinate = ({ ordinate=new Model(),abscissas=[new Model()] })=>{
+    insertAbscissasByOrdinate = ({ ordinate=new Entity(),abscissas=[new Entity()] })=>{
         const batch = abscissas
             .map(a=>this.#linking
                 .build({abscissa:a,ordinate})
@@ -57,7 +60,8 @@ export default class DbLinked {
         this.myContext()
             .where(linked.key)
             .del()
-            .then(affected=>affected > 0)
+            .then(affected=>new Result({data:affected}))
+            .catch(err=>Promise.reject(new Result({code:500,message:err})))
     
 
     getAbscissasByOrdinate(linked=new Linking()){
@@ -77,9 +81,7 @@ export default class DbLinked {
                     clause.on(field,abscissas[i])
                 })
             )
-            .then(list=>
-                list.map(abscissa=>Abscissa.build(abscissa))
-            )
+            .then(result=>new Result({data:result}))
     }
 
     getOrdinatesByAbscissa(linked=new Linking()){
@@ -99,9 +101,7 @@ export default class DbLinked {
                     clause.on(field,ordinates[i])
                 })
             )
-            .then(list=>
-                list.map(ordinate=>Ordinate.build(ordinate))
-            )
+            .then(result=>new Result({data:result}))
     }
 
 }

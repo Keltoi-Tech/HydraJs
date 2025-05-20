@@ -1,59 +1,56 @@
-import knex, { TableBuilder } from "knex"
-import Model from "./index"
-import runWhenFalse from "../helper/runWhenFalse"
+import knex from "knex"
+import Entity from "./entity"
+import { runWhenFalse } from "../helper"
 
 export default class Linking{
-    #abscissa=new Model()
-    #ordinate=new Model()
-    #AbscissaModel=Model
-    #OrdinateModel=Model
+    #abscissa=new Entity()
+    #ordinate=new Entity()
+    #AbscissaEntity=Entity
+    #OrdinateEntity=Entity
 
 
     get Abscissa(){
-        return this.#AbscissaModel
+        return this.#AbscissaEntity
     }
 
     get Ordinate(){
-        return this.#OrdinateModel
+        return this.#OrdinateEntity
     }
 
     constructor(
-        AbscissaModel=Model,
-        OrdinateModel=Model,
+        AbscissaEntity=Entity,
+        OrdinateEntity=Entity,
         {
-            abscissa = new AbscissaModel(),
-            ordinate = new OrdinateModel()
+            abscissa=new AbscissaEntity(),
+            ordinate=new OrdinateEntity()
         })
     {
-        this.#AbscissaModel = AbscissaModel
-        this.#OrdinateModel = OrdinateModel
+        this.#AbscissaEntity = AbscissaEntity
+        this.#OrdinateEntity = OrdinateEntity
 
         this.#abscissa = abscissa
         this.#ordinate = ordinate
     }
 
     static build=({
-        AbscissaModel=Model,
-        OrdinateModel=Model,
-        abscissa=new Model(),
-        ordinate=new Model()
-    })=>new Linking(AbscissaModel,OrdinateModel,{abscissa,ordinate})
+        AbscissaEntity=Entity,
+        OrdinateEntity=Entity,
+        abscissa=new Entity(),
+        ordinate=new Entity()
+    })=>new Linking(AbscissaEntity,OrdinateEntity,{abscissa,ordinate})
 
-    static makeMe(
+    static structMe(
         db=knex(),
-        abscissa=Model,
-        ordinate=Model,
-        schema=(t=new TableBuilder())=>{}
+        abscissa=Entity,
+        ordinate=Entity,
+        schema=(t)=>{}
     ){
         const tableName = `${abscissa.name}${ordinate.name}`
 
         return runWhenFalse(
             db.schema.hasTable(tableName),
-            () => db.schema.createTable(
-                tableName,
-                table=>{
-                    schema(table)
-                }
+            () => Promise.resolve(
+                db.schema.createTable(tableName, table=>{ schema(table) })
             )
         )
     }
@@ -67,7 +64,7 @@ export default class Linking{
         return { idOrdinate: this.#ordinate.key }
     }
 
-    get key(){
+    get $(){
         return {
             ...this.abscissaKey,
             ...this.ordinateKey
