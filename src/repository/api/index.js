@@ -1,19 +1,9 @@
-import Model  from "../../model/index.js"
-import Context from "./context.js"
+import Repository from "./base";
+import RestfulRepository from "./restful";
+import Context from "./context";
 
-export default class Repository{
-    #context
+const ApiRepository = Repository
+const ApiContext = Context
+const ApiRestfulRepository = RestfulRepository  
 
-    constructor(model=Model,context=new Context()){
-        this.#context = context
-        this.modelInstance=(m={})=>new model(m)
-    }
-
-    static queryString(param={}){
-        return '?' + Object.entries(param)
-            .map(([k,v])=>`${k}=${v}`)
-            .join('&')
-    }
-
-    get context(){ return this.#context }
-}
+export { ApiContext, ApiRepository, ApiRestfulRepository };

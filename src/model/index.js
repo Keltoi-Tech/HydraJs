@@ -1,17 +1,10 @@
-export default class Model{
-    #key
+import Entity from "./entity";
+import Model from "./base";
+import Linking from "./linking";
+import Traceable from "./traceable";
+import Status from "./status";
+import Thing from "./thing";
+import Changeable from "./changeable";
+import Result from "./result";
 
-    constructor(key={}){
-        this.#key = key
-    }
-
-    get key(){ return this.#key }
-    set key(value={}){ this.#key=value }    
-
-    get entity(){ return {} }
-
-    static build(key={}){
-        return new Model(key)
-    }
-
-}
+export { Entity, Model, Changeable, Linking, Traceable, Status, Thing, Result };

@@ -1,1 +1,878 @@
-"use strict";var e=require("knex"),t=require("axios");class Model{#e;constructor(e={}){this.#e=e}get key(){return this.#e}set key(e={}){this.#e=e}get entity(){return{}}static build(e={}){return new Model(e)}}class Logged extends Model{#t=new Date;#s=void 0|new Date;#n=!0;constructor({key:e={},createdAt:t=new Date,updatedAt:s=void 0|new Date,active:n=!0}){super(e),this.#n=n,this.#s=s,this.#t=t}get createdAt(){return this.#t}set createdAt(e=new Date){this.createdAt=e}get updatedAt(){return this.#s}set updatedAt(e=new Date){this.#s=e}get active(){return this.#n}set active(e=!0){this.#n=e}static makeMe(t=e(),s=Model,n=(t=new e.TableBuilder)=>{}){return t.schema.createTable(s.name,(e=>{n(e),e.dateTime("createdAt").notNullable().defaultTo(t.fn.now()),e.dateTime("updatedAt").nullable(),e.boolean("active").defaultTo(!0)}))}}class Linking{#i=new Model;#a=new Model;#r=Model;#o=Model;get Abscissa(){return this.#r}get Ordinate(){return this.#o}static build=({abscissa:e=new Model,ordinate:t=new Model})=>new Linking(Model,Model,{abscissa:e,ordinate:t});constructor(e=Model,t=Model,{abscissa:s=e.build(),ordinate:n=t.build()}){this.#r=e,this.#o=t,this.#i=s,this.#a=n}static makeMe(t=e(),s=Model,n=Model,i=(t=new e.TableBuilder)=>{}){return t.schema.createTable(`${s.name}${n.name}`,(e=>{i(e)}))}get abscissaKey(){return{idAbscissa:this.#i.key.id}}get ordinateKey(){return{idOrdinate:this.#a.key.id}}get key(){return{...this.abscissaKey,...this.ordinateKey}}get abscissa(){return this.#i}set abscissa(e=new Model){this.#i=e}get ordinate(){return this.#a}set ordinate(e=new Model){this.ordinate=e}}class Thing extends Model{#d;constructor({key:e={},name:t=""}){super(e),this.#d=t}get name(){return this.#d}set name(e=""){this.#d=e}get entity(){return{name:this.#d}}static makeMe(t=e(),s=Thing,n=(t=new e.TableBuilder)=>{}){return t.schema.createTable(s.name,(e=>{n(e),e.string(255).notNullable()}))}}let s=class Context{#h;constructor(t=e()){this.#h=t}get db(){return this.#h}unitOfWork(...e){return this.#h.transaction().then((t=>{e.forEach((e=>e.context=t));const clean=()=>e.forEach((e=>e.resetContext()));return{done:()=>t.commit().then(clean),rollback:()=>t.rollback().then(clean)}}))}static instance(t=e()){return new Context(t)}async terraform(e=[]){const t=e.map((async e=>{await this.#h.schema.hasTable(e.name)||await e.makeMe(this.#h)}));await Promise.all(t)}},n=class Repository{#d="";myContext;static anyOrError(e,t={code:0,message:""}){if(e)return e;throw t}static setOrEmpty(e=[],t=e=>e){return e.length?e.map(t):[]}constructor(e=Model,t=new s){this.#d=e.name,this.myContext=()=>t.db(this.#d),this.resetContext=()=>{this.myContext=()=>t.db(this.#d)},this.modelInstance=(t={})=>e.build(t)}set context(t=e()){this.myContext=()=>t(this.#d)}insert=(e=new Model)=>this.myContext().insert(e.entity,Object.keys(e.key)).then((t=>e.key=t[0])).then((()=>e));update=(e=new Model)=>this.myContext().where(e.key).update(e.entity).then((e=>e>0));delete=(e={})=>this.myContext().where(e).del().then((e=>e>0));get=(e={})=>this.myContext().where(e).first().then((e=>Repository.anyOrError(e,{code:404,message:"Not found"}))).then(this.modelInstance);list=()=>this.myContext().select().then((e=>Repository.setOrEmpty(e,this.modelInstance)))};class Context{#c;constructor(e=t.create({})){this.#c=e}get http(){return this.#c}}class Repository{#l;constructor(e=Model,t=new Context){this.#l=t,this.modelInstance=(t={})=>new e(t)}static queryString(e={}){return"?"+Object.entries(e).map((([e,t])=>`${e}=${t}`)).join("&")}get context(){return this.#l}}exports.ApiContext=Context,exports.ApiRepository=Repository,exports.ApiRestRepository=class RestRepository extends Repository{constructor(e=Model,t=new Context){super(e,t)}#m=(e="",t=void 0|{})=>this.context.http.get(t?`${e}${Repository.queryString(t)}`:e);get=(e="",t=void 0|{})=>this.#m(e,t).then((e=>this.modelInstance(e)));list=(e="",t=void 0|{})=>this.#m(e,t).then(((e=[])=>e.map((e=>this.modelInstance(e)))));create=(e="",t=new Model)=>this.context.http.post(e,t.entity);update=(e="",t=new Model)=>this.context.http.put(e,t.entity);change=(e="",t=new Model)=>this.context.http.patch(e,t.entity);delete=(e,t=new Model)=>this.context.http.delete(`/${e}`)},exports.DbContext=s,exports.DbLinked=class DbLinked{#y;#d="";myContext;constructor(e=Linking,t=new s){this.#d=e.name,this.myContext=()=>t.db(this.#d),this.#y=e}#u=(e=[new Linking])=>this.myContext().insert(e.map((e=>e.key()))).then((()=>e));insert=(e=new Linking)=>{const t=e.key();return this.myContext().insert(t).then((()=>t))};insertOrdinatesByAbscissa=(e=new Model,t=[new Model])=>{const s=t.map((t=>this.#y.build({abscissa:e,o:t})));return this.#u(s)};insertAbscissasByOrdinate=(e=new Model,t=[new Model])=>{const s=t.map((t=>this.#y.build({a:t,ordinate:e})));return this.#u(s)};delete=(e=new Linking)=>this.myContext().where(e.key()).del().then((e=>e>0));abscissasByOrdinate=(e=new Linking)=>{const t=e.Abscissa,s=Object.keys(e.abscissaKey),n=s.map((e=>`${this.#d}.${e}`)),i=s.map((e=>`${t.name}.${e}`));return this.myContext().where(e.ordinateKey).select(n).join(t.name,(e=>n.forEach(((t,s)=>{e.on(t,i[s])})))).then((e=>e.map((e=>t.build(e)))))};ordinatesByAbscissa=(e=new Linking)=>{const t=e.Ordinate,s=Object.keys(e.ordinateKey),n=s.map((e=>`${this.#d}.${e}`)),i=s.map((e=>`${t.name}.${e}`));return this.myContext().where(e.abscissaKey).select(n).join(t.name,(e=>n.forEach(((t,s)=>{e.on(t,i[s])})))).then((e=>e.map((e=>t.build(e)))))}},exports.DbLoggedRepository=class LoggedRepository extends n{constructor(e=Logged,t=new s){super(e,t)}deceased=()=>this.myContext().where({active:!1}).select().then((e=>n.setOrEmpty(e,this.modelInstance)));get=(e={})=>this.myContext().where({...e,active:!0}).first().then((e=>n.anyOrError(e,{code:404,message:"Not found"}))).then(this.modelInstance);before=(e=new Date)=>this.myContext().where("createdAt","<",e.toISOString()).select().then((e=>n.setOrEmpty(e,this.modelInstance)));after=(e=new Date)=>this.myContext().where("createdAt",">",e.toISOString()).select().then((e=>n.setOrEmpty(e,this.modelInstance)));list=()=>this.myContext().select().orderBy("createdAt","updatedAt").where({active:!0}).then((e=>n.setOrEmpty(e,this.modelInstance)));update=(e=new Logged)=>this.myContext().where(e.key).update({...e.entity,updatedAt:new Date}).then((e=>e>0));delete=(e={})=>this.myContext().where(e).update({updatedAt:(new Date).toISOString(),active:!1}).then((e=>e>0))},exports.DbRepository=n,exports.DbThingRepository=class ThingRepository extends n{constructor(e=new s){super(model=Thing,e)}getByName=(e="")=>this.myContext().where({name:e}).select().then((e=>n.setOrEmpty(e,this.modelInstance)))},exports.Linking=Linking,exports.Logged=Logged,exports.Model=Model,exports.Thing=Thing;
+import knex from 'knex';
+import axios from 'axios';
+
+var runWhenFalse = (
+        cond = Promise.resolve(true),
+        execute = async () => {},
+)=>cond
+.then(async isTrue=>{
+    if (!isTrue) await execute();
+});
+
+var runWhenTrue = (
+        cond = Promise.resolve(true),
+        execute = async () => {},
+)=>cond
+.then(async isTrue=>{
+    if (isTrue) await execute();
+});
+
+class Result {
+    #code
+    #message
+    #data
+
+    constructor({ code=0, message='', data={} }) {
+        this.#code = code;
+        this.#message = message;
+        this.#data = data;
+    }
+
+    get isError() {
+        return this.#code > 299
+    }
+
+    get error() {
+        return {
+            code: this.#code,
+            message: this.#message
+        }
+    }
+
+    get ok() {
+        return {
+            code: this.#code,
+            data: this.#data
+        }
+    }
+
+    sendError(res) { 
+        res
+            .status(this.#code)
+            .send(this.#message); 
+    }
+
+    sendOk(res) { 
+        res
+            .status(this.#code)
+            .json(this.#data);
+    }
+}
+
+class Entity{
+    #key
+    #data
+
+    constructor(key={},data={}){
+        this.#data = data;
+        this.#key = key;
+    }
+
+    get key(){ return this.#key }
+    get data(){ return this.#data }
+
+    get $(){ 
+        return { ...this.#key, ...this.#data }
+    }
+
+    static migrations(){ return [] }
+
+    static structMe(db=knex()){
+        throw new Error('Abstract class cant be instantiated')
+    }
+
+    static build({ }){
+        throw new Error('Abstract class cant be instantiated')
+    }
+
+    static fromResult(result=new Result()){
+        if(result.isError) return Promise.reject(result)
+    }   
+}
+
+class Model {
+    constructor({}) {
+        
+    }
+
+    static fromEntity(entity = new Entity()) {
+        return new Model(entity.$)
+    }
+
+    validate(){}
+}
+
+class Linking{
+    #abscissa=new Entity()
+    #ordinate=new Entity()
+    #AbscissaEntity=Entity
+    #OrdinateEntity=Entity
+
+
+    get Abscissa(){
+        return this.#AbscissaEntity
+    }
+
+    get Ordinate(){
+        return this.#OrdinateEntity
+    }
+
+    constructor(
+        AbscissaEntity=Entity,
+        OrdinateEntity=Entity,
+        {
+            abscissa=new AbscissaEntity(),
+            ordinate=new OrdinateEntity()
+        })
+    {
+        this.#AbscissaEntity = AbscissaEntity;
+        this.#OrdinateEntity = OrdinateEntity;
+
+        this.#abscissa = abscissa;
+        this.#ordinate = ordinate;
+    }
+
+    static build=({
+        AbscissaEntity=Entity,
+        OrdinateEntity=Entity,
+        abscissa=new Entity(),
+        ordinate=new Entity()
+    })=>new Linking(AbscissaEntity,OrdinateEntity,{abscissa,ordinate})
+
+    static structMe(
+        db=knex(),
+        abscissa=Entity,
+        ordinate=Entity,
+        schema=(t)=>{}
+    ){
+        const tableName = `${abscissa.name}${ordinate.name}`;
+
+        return runWhenFalse(
+            db.schema.hasTable(tableName),
+            () => Promise.resolve(
+                db.schema.createTable(tableName, table=>{ schema(table); })
+            )
+        )
+    }
+
+
+    get abscissaKey(){
+        return { idAbscissa: this.#abscissa.key }
+    }
+
+    get ordinateKey(){
+        return { idOrdinate: this.#ordinate.key }
+    }
+
+    get $(){
+        return {
+            ...this.abscissaKey,
+            ...this.ordinateKey
+        }
+    }
+
+    get entity(){}
+
+    get abscissa(){ return this.#abscissa }
+    set abscissa(value = this.Abscissa.build()){ this.#abscissa = value; }
+
+    get ordinate(){ return this.#ordinate }
+    set ordinate(value = this.Ordinate.build()){ this.ordinate = value; }
+
+}
+
+class Traceable extends Entity{
+    constructor({
+        key={},
+        struct={},
+        createdAt=new Date()
+    }){
+        super(key,{...struct,createdAt});
+    } 
+
+    get createdAt(){ return this.data.createdAt }
+
+    static structMe(
+        db=knex(),
+        model=Traceable,
+        schema=(t)=>{}
+    ){
+        return runWhenFalse(
+            db.schema.hasTable(model.name),
+            async ()=>Promise.resolve(
+                db.schema.createTable(
+                    model.name,
+                    table=>{
+                        schema(table);
+
+                        table.dateTime('createdAt')
+                            .notNullable()
+                            .defaultTo(db.fn.now());
+                    }
+                )
+            )
+        )
+    }
+}
+
+class Status extends Entity{
+    static build=({ id=1,description='' })=>new Status({id,description})
+
+    static structMe( 
+        db=knex(), 
+        model=Status, 
+        schema=(t)=>{} 
+    ){
+        return runWhenFalse(
+            db.schema.hasTable(model.name),
+            ()=>Promise.resolve(
+                db.schema.createTable(
+                    model.name,
+                    table=>{
+                        table.increments();
+
+                        table
+                            .string('status',50)
+                            .notNullable()
+                            .unique();
+
+                        schema(table);
+                    }
+                )
+            )
+        )
+    }
+
+    constructor({ id=1, description=''}){
+        super({ id }, { status:description });
+    }
+
+    get description(){ return this.data.status }
+    set description( value='' ){ this.data.status = value;}
+}
+
+class Thing extends Entity{
+    constructor({
+        key={},
+        name='',
+        struct={}
+    }){
+        super(key,{ name, ...struct });
+    }
+
+    get name(){ return this.data.name }
+    set name(value=''){ this.data.name = value; }    
+
+    static structMe(
+        db=knex(),
+        thing=Thing,
+        size = 255,
+        schema=(t)=>{}
+    ){
+        return runWhenFalse(
+            db.schema.hasTable(thing.name),
+            ()=>Promise.resolve(
+                db.schema.createTable(
+                    thing.name,
+                    table=>{
+                        schema(table);
+
+                        table.string('name',size)
+                            .notNullable();
+                    }
+                )
+            )
+        )
+    }
+}
+
+class Changeable extends Entity{
+    constructor({
+        key={},
+        struct = {},
+        createdAt=new Date(),
+        updatedAt=new Date()|undefined,
+        active=true
+    }){
+        super(
+            key,
+            { 
+                ...struct,
+                createdAt,
+                updatedAt,
+                active
+            }
+        );
+    }
+
+    get createdAt(){ return this.data.createdAt }
+    get updatedAt(){ return this.data.updatedAt }
+    get active(){ return this.data.active }
+
+    static structMe(
+        db=knex(),
+        model=Changeable,
+        schema=(t)=>{}
+    ){
+        return runWhenFalse(
+            db.schema.hasTable(model.name),
+            ()=>Promise.resolve(
+                db.schema.createTable(model.name,table=>{
+                    schema(table);
+
+                    table.dateTime('createdAt')
+                        .notNullable()
+                        .defaultTo(db.fn.now());
+
+                    table.dateTime('updatedAt')
+                        .nullable();
+
+                    table.boolean('active')
+                        .defaultTo(true);
+                })
+            )
+        )
+    }
+}
+
+class Migration{
+    #db
+    constructor(db = knex()) {
+        this.#db = db;
+    }
+
+    #get = ({ name='' })=>this
+        .#db('migration')
+        .where({ name })
+        .first('iteration')
+        .then(result=>!!result?result:{ iteration:0 })
+
+
+    #update = ({ iteration=0,name='' })=>this
+        .#db('migration')
+        .where({ name })
+        .update({ iteration })
+
+    async runMigrations({ entity = Entity, migrations=[async ()=>{}] }){
+        const name = entity.name;
+
+        const { iteration } = await this.#get(name);
+
+        const listSize = migrations.length;
+
+        if (iteration >= listSize) return
+
+        for (let index = iteration; index < listSize; index++) {
+            await migrations[index]();
+        }
+
+        await this.#update({ iteration:listSize,name });
+    }
+
+    static structMe(db=knex()){
+        return runWhenFalse(
+            db.schema.hasTable('migration'),
+            ()=>Promise.resolve(
+                db.schema.createTable('migration', table => {
+                    table.string('name',100)
+                        .notNullable()
+                        .unique();
+
+                    table.integer('iteration')
+                        .notNullable()
+                        .unsigned()
+                        .defaultTo(0);
+                })
+            )
+        )
+    }
+}
+
+let Context$2 = class Context{
+    #db
+
+    constructor(database=knex()){
+        this.#db= database;
+    }
+
+    get db(){return this.#db}
+
+    unitOfWork(...repositories){
+        return this.#db.transaction().then(trx=>{
+            repositories.forEach(repo=>repo.context = trx);
+
+            const clean =()=>repositories.forEach(repo=>
+                repo.resetContext()
+            );
+
+            return {
+                done:()=>trx.commit().then(clean),
+                rollback:()=>trx.rollback().then(clean)
+            }
+        })
+    }
+
+    static instance(database=knex()){ return new Context(database) }
+
+    async terraform(models=[Model]){
+        await Migration.structMe(this.#db);
+
+        const migration = new Migration(this.#db);
+
+        const promises = models.map(model=>
+            model.structMe(this.#db)
+                .then(()=>migration
+                    .runMigrations({ entity: model, migrations: model.migrations(this.#db) })
+                )
+        );        
+
+        await Promise.all(promises);
+    }
+};
+
+let Repository$1 = class Repository{
+    #name='';
+
+    myContext
+
+    constructor(entity=Entity,context=new Context$2())
+    {
+        this.#name = entity.name;
+
+        this.myContext=()=>context.db(this.#name);
+
+        this.resetContext=()=>{
+            this.myContext=()=>context.db(this.#name);
+        };
+    }
+
+    set context(value=knex()){ this.myContext=()=>value(this.#name); }
+
+    create = (entity = new Entity())=>
+        this.myContext()
+            .insert(entity.$)
+            .then(()=>new Result({data:entity}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
+
+    insert = (entity = new Entity())=>
+        this.myContext()
+            .insert(entity.data,Object.keys(entity.key))
+            .then(ids=>new Result({ 
+                data:{ key: ids[0] }
+            }))
+            .catch(err=>Promise.reject( 
+                new Result({code:500,message:err}) 
+            ))
+
+    update = (entity = new Entity())=>
+        this.myContext()
+            .where(entity.key)
+            .update(entity.data)
+            .then(affected=>new Result({ data:affected }))
+            .catch(err=>Promise.reject( 
+                new Result({code:500,message:err}) 
+            ))
+
+    delete = (entity = new Entity())=>
+        this.myContext()
+            .where(entity.key)
+            .del()
+            .then(affected=>new Result({ data:affected }))
+            .catch(err=>Promise.reject( 
+                new Result({code:500,message:err}) 
+            ))
+
+    get = (entity = new Entity())=>
+        this.myContext()
+            .where(entity.key)
+            .first()
+            .then(model=>{
+                if (!!model) return new Result({ data:model })
+
+                const error = new Result({code:404,message:'Not found'});
+
+                return Promise.reject(error)
+            })
+
+    list = ()=>
+        this.myContext()
+            .select()
+            .then(models=>new Result({ data:models }))
+};
+
+class ChangeableRepository extends Repository$1{
+    constructor(entity = Changeable,context=new Context$2()){
+        super(entity,context);
+    }
+
+    deceased = (order = 'asc') =>
+        this.myContext()
+            .where({active:false})
+            .select()
+            .orderBy(['createdAt','updatedAt'],order)
+            .then(result => new Result({data:result}))
+
+    before = (date = new Date(), order = 'asc') =>
+        this.myContext()
+            .where('createdAt','<',date.toISOString())
+            .where({active:true})
+            .select()
+            .orderBy(['createdAt','updatedAt'],order)
+            .then(result => new Result({data:result}))
+
+    after = (date=new Date(), order = 'asc') =>
+        this.myContext()
+            .where('createdAt','>',date.toISOString())
+            .where({active:true})
+            .select()
+            .orderBy(['createdAt','updatedAt'],order)
+            .then(result => new Result({data:result}))
+
+    list = (order = 'asc') =>
+        this.myContext()
+            .where({active:true})
+            .select()
+            .orderBy(['createdAt','updatedAt'],order)
+            .then(result => new Result({data:result}))
+
+    last = () =>
+        this.myContext()
+            .where({active:true})
+            .first()
+            .orderBy('createdAt',"desc")
+            .then(result => {
+                if (!!result) return result
+
+                const error = new Result({code:404,message:'Not found'});
+
+                return Promise.reject(error)
+            })
+
+    first = () =>
+        this.myContext()
+            .where({active:true})
+            .first()
+            .orderBy('createdAt',"asc")
+            .then(result => {
+                if (!!result) return result
+
+                const error = new Result({code:404,message:'Not found'});
+
+                return Promise.reject(error)
+            })
+}
+
+class TraceableRepository extends Repository$1{
+    constructor(entity=Traceable,context=new Context$2()){
+        super(entity,context);
+    }
+
+    get = (traceable = new Traceable()) =>
+        this.myContext()
+            .where(traceable.key)
+            .first()
+            .then(model => {
+                if (!!model) return model
+
+                const error = new Result({code:404,message:'Not found'});
+
+                return Promise.reject(error)
+            })
+
+    before = (date = new Date(), order = 'asc') =>
+        this.myContext()
+            .where('createdAt','<',date.toISOString())
+            .select()
+            .orderBy('createdAt',order)
+            .then(result => new Result({data:result}))
+
+    after = (date = new Date(), order = 'asc') =>
+        this.myContext()
+            .where('createdAt','>',date.toISOString())
+            .select()
+            .orderBy('createdAt',order)
+            .then(result => new Result({data:result}))
+
+    list = (order='asc') =>
+        this.myContext()
+            .select()
+            .orderBy('createdAt',order)
+            .then(result => new Result({data:result}))
+
+    update = () => Promise.reject(new Result({code:400,message:'Cannot update a logged object'}))
+
+    delete = () => Promise.reject(new Result({code:400,message:'Cannot delete a logged object'}))
+    
+}
+
+class ThingRepository extends Repository$1{
+    constructor(entity = Thing,context=new Context()){
+        super(entity,context);
+    }
+
+    getByName = (name='') =>
+        this.myContext()
+            .where({name})
+            .first()
+            .then(result=>!!result
+                ?new Result({data:result})
+                :new Result({code:404,message:'Not found'})
+            )
+            .catch(err=>Promise.reject(new Result({code:500,message:err})))
+}
+
+class DbLinked {
+    #linking
+    #name=''
+
+    myContext
+
+    constructor(link=Linking,context=new Context$2){
+        this.#name  = link.name;
+        this.myContext = () => context.db(this.#name);
+        this.#linking = link;
+    }
+
+    createBatch = (linkings=[ new Linking() ])=>
+        this.myContext()
+            .insert(
+                linkings.map(l => (
+                    {
+                        ...l.key,
+                        ...l.entity
+                    })
+                )
+            )
+            .then(()=>new Result({data:linkings}))
+            .catch(err=>Promise.reject(new Result({code:500,message:err})));
+
+    create = (linked=new Linking())=>   
+        this.myContext()
+            .insert({
+                ...linked.key,
+                ...linked.entity
+            })
+            .then(()=>new Result({data:linked}))
+            .catch(err=>Promise.reject(new Result({code:500,message:err})));
+    
+
+    insertOrdinatesByAbscissa = ({ abscissa=new Entity(),ordinates=[new Entity()] })=>{
+        const batch = ordinates
+            .map(o=>this.#linking
+                .build({abscissa,ordinate:o})
+            );
+
+        return this.createBatch(batch);
+    }
+
+    insertAbscissasByOrdinate = ({ ordinate=new Entity(),abscissas=[new Entity()] })=>{
+        const batch = abscissas
+            .map(a=>this.#linking
+                .build({abscissa:a,ordinate})
+            );
+
+        return this.createBatch(batch)
+    }
+
+    delete = (linked=new Linking())=>
+        this.myContext()
+            .where(linked.key)
+            .del()
+            .then(affected=>new Result({data:affected}))
+            .catch(err=>Promise.reject(new Result({code:500,message:err})))
+    
+
+    getAbscissasByOrdinate(linked=new Linking()){
+        const Abscissa = linked.Abscissa;
+        const Ordinate = linked.Ordinate;
+        const keys = Object.keys(linked.abscissaKey);
+        const abscissaKey = Object.keys(linked.abscissa.key);
+
+        const fields = keys.map(key=>`${Abscissa.name}${Ordinate.name}.${key}`);
+        const abscissas = abscissaKey.map(key=>`${Abscissa.name}.${key}`);
+
+        return this.myContext()
+            .where(linked.ordinateKey)
+            .select(`${Abscissa.name}.*`)
+            .join(Abscissa.name,clause=>
+                fields.forEach((field,i)=>{
+                    clause.on(field,abscissas[i]);
+                })
+            )
+            .then(result=>new Result({data:result}))
+    }
+
+    getOrdinatesByAbscissa(linked=new Linking()){
+        const Ordinate = linked.Ordinate;
+        const Abscissa = linked.Abscissa;
+        const keys = Object.keys(linked.ordinateKey);
+        const ordinateKeys = Object.keys(linked.ordinate.key);
+
+        const fields = keys.map(key=>`${Abscissa.name}${Ordinate.name}.${key}`);
+        const ordinates = ordinateKeys.map(key=>`${Ordinate.name}.${key}`);
+
+        return this.myContext()
+            .where(linked.abscissaKey)
+            .select(`${Ordinate.name}.*`)
+            .join(Ordinate.name,clause=>
+                fields.forEach((field,i)=>{
+                    clause.on(field,ordinates[i]);
+                })
+            )
+            .then(result=>new Result({data:result}))
+    }
+
+}
+
+const DbRepository = Repository$1;
+const DbContext = Context$2;
+const DbChangeableRepository = ChangeableRepository;
+const DbTraceableRepository = TraceableRepository;
+const DbThingRepository = ThingRepository;
+
+class Service {
+    #context
+    constructor(context=new DbContext()){
+        this.#context = context;
+    }
+
+    get context(){return this.#context}    
+
+    handleError = (code,message)=>Promise.reject(new Result({code,message}))
+    handleFailure = (err)=> this.handleError({code:500,message:err.message})
+}
+
+class Handler {
+    #context
+    constructor({ context = new DbContext }) {
+        this.#context = context;
+    }
+
+    get context(){
+        return this.#context
+    }
+
+    handle(){}
+    handleError({ code, message }) {
+        return Promise.reject(new Result({ code, message }));
+    }
+}
+
+let Context$1 = class Context{
+    #http
+
+    constructor(config=axios.create({})){
+        this.#http = config;
+    }
+
+    get http(){ return this.#http }
+};
+
+class Repository {
+    #context
+
+    constructor(entity=Entity,context=new Context$1()){
+        this.#context = context;
+    }
+
+    static queryString(param={}){
+        return '?' + Object.entries(param)
+            .map(([k,v])=>`${k}=${v}`)
+            .join('&')
+    }
+
+    get context(){ return this.#context }
+}
+
+class RestfulRepository extends Repository{
+    constructor(entity = Entity,context=new Context$1()){
+        super(entity,context);
+    }
+
+    #keysAsParams(route='',key={}){
+        const params = Object.keys(key);
+
+        params.forEach(param=>
+            route = route.replace(`:${param}`,key[param])
+        );        
+
+        return route
+    }
+
+    #httpGet=(route='',query={}|undefined)=>this.context
+        .http
+        .get(!! query ? `${route}${Repository.queryString(query)}` : route)
+        .then(value=>{
+            value.status === 200 
+                ? new Result({data:value.data}) 
+                : Promise.reject(new Result({code:value.status, message:value.statusText}));
+        })
+
+    get=(route='',query={}|undefined)=>this.#httpGet(route,query)
+        .then(value=>{
+            value.status === 200 
+                ? new Result({data:value.data}) 
+                : Promise.reject(new Result({code:value.status, message:value.statusText}));
+        })
+
+    list=(route='',query={}|undefined)=>this.#httpGet(route,query)
+        .then(value=>{
+            value.status === 200 
+                ? new Result({data:value.data}) 
+                : Promise.reject(new Result({code:value.status, message:value.statusText}));
+        })
+
+    create=(route='',entity=new Entity())=>this.context
+        .http
+        .post(route,entity.data)
+        .then(value=>{
+            value.status === 201
+                ? new Result({data:value.data}) 
+                : Promise.reject(new Result({code:value.status, message:value.statusText}));
+        })
+
+    update=(route='',entity=new Entity())=>{
+        const url = this.#keysAsParams(route,entity.key);
+
+        return this.context
+            .http
+            .put(url,model.entity)
+            .then(value=>{
+                value.status === 200 
+                    ? new Result({data:value.data}) 
+                    : Promise.reject(new Result({code:value.status, message:value.statusText}));
+            })
+    }
+
+    change=(route='',entity=new Entity())=>{
+        const url = this.#keysAsParams(route,entity.key);
+
+        return this.context
+            .http
+            .patch(url,model.entity)
+            .then(value=>{
+                value.status === 200 
+                    ? new Result({data:value.data}) 
+                    : Promise.reject(new Result({code:value.status, message:value.statusText}));
+            })
+    }
+
+    delete=(id,entity = new Entity())=>{
+        const url = this.#keysAsParams(route,entity.key);
+
+        return this.context
+            .http
+            .delete(url)
+            .then(value=>{
+                value.status === 200 
+                    ? new Result({data:value.data}) 
+                    : Promise.reject(new Result({code:value.status, message:value.statusText}));
+            })
+    }
+}
+
+const ApiRepository = Repository;
+const ApiContext = Context$1;
+const ApiRestfulRepository = RestfulRepository;
+
+export { ApiContext, ApiRepository, ApiRestfulRepository, Changeable, DbChangeableRepository, DbContext, DbLinked, DbRepository, DbThingRepository, DbTraceableRepository, Entity, Handler, Linking, Migration, Model, Result, Service, Status, Thing, Traceable, runWhenFalse, runWhenTrue };

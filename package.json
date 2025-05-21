@@ -1,8 +1,13 @@
 {
   "name": "@keltoi/hydra",
-  "version": "1.1.4",
+  "version": "2.0.1",
   "description": "Boilerplate to start your API from zero using Repository Pattern",
   "main": "index.js",
+  "module": "index.js",
+  "files": [
+    "index.js"
+  ],
+  "type": "module",
   "scripts": {
     "test": "npm run build & npm link",
     "build": "rollup -c"
@@ -25,6 +30,10 @@
     "@rollup/plugin-terser": "^0.4.4",
     "axios": "^1.7.7",
     "knex": "^3.1.0",
-    "rollup": "^4.24.4"
+    "rollup": "^4.40.2"
+  },
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^28.0.3",
+    "@rollup/plugin-json": "^6.1.0"
   }
 }

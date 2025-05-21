@@ -1,75 +1,82 @@
-import knex, { TableBuilder } from "knex"
-import Model from "./index"
+import knex from "knex"
+import Entity from "./entity"
+import { runWhenFalse } from "../helper"
 
 export default class Linking{
-    #abscissa=new Model()
-    #ordinate=new Model()
-    #AbscissaModel=Model
-    #OrdinateModel=Model
+    #abscissa=new Entity()
+    #ordinate=new Entity()
+    #AbscissaEntity=Entity
+    #OrdinateEntity=Entity
 
 
     get Abscissa(){
-        return this.#AbscissaModel
+        return this.#AbscissaEntity
     }
 
     get Ordinate(){
-        return this.#OrdinateModel
+        return this.#OrdinateEntity
     }
 
-    static build=({
-        abscissa=new Model(),
-        ordinate=new Model()
-    })=>new Linking(Model,Model,{abscissa,ordinate})
-
     constructor(
-        AbscissaModel=Model,
-        OrdinateModel=Model,
+        AbscissaEntity=Entity,
+        OrdinateEntity=Entity,
         {
-            abscissa = AbscissaModel.build(),
-            ordinate = OrdinateModel.build()
+            abscissa=new AbscissaEntity(),
+            ordinate=new OrdinateEntity()
         })
     {
-        this.#AbscissaModel = AbscissaModel
-        this.#OrdinateModel = OrdinateModel
+        this.#AbscissaEntity = AbscissaEntity
+        this.#OrdinateEntity = OrdinateEntity
 
         this.#abscissa = abscissa
         this.#ordinate = ordinate
     }
 
-    static makeMe(
+    static build=({
+        AbscissaEntity=Entity,
+        OrdinateEntity=Entity,
+        abscissa=new Entity(),
+        ordinate=new Entity()
+    })=>new Linking(AbscissaEntity,OrdinateEntity,{abscissa,ordinate})
+
+    static structMe(
         db=knex(),
-        abscissa=Model,
-        ordinate=Model,
-        schema=(t=new knex.TableBuilder())=>{}
+        abscissa=Entity,
+        ordinate=Entity,
+        schema=(t)=>{}
     ){
-        return db.schema
-            .createTable(
-                `${abscissa.name}${ordinate.name}`,
-                table=>{
-                    schema(table)
-                }
+        const tableName = `${abscissa.name}${ordinate.name}`
+
+        return runWhenFalse(
+            db.schema.hasTable(tableName),
+            () => Promise.resolve(
+                db.schema.createTable(tableName, table=>{ schema(table) })
             )
+        )
     }
 
+
     get abscissaKey(){
-        return { idAbscissa: this.#abscissa.key['id'] }
+        return { idAbscissa: this.#abscissa.key }
     }
 
     get ordinateKey(){
-        return { idOrdinate: this.#ordinate.key['id'] }
+        return { idOrdinate: this.#ordinate.key }
     }
 
-    get key(){
+    get $(){
         return {
             ...this.abscissaKey,
             ...this.ordinateKey
         }
     }
 
+    get entity(){}
+
     get abscissa(){ return this.#abscissa }
-    set abscissa(value = new Model()){ this.#abscissa = value }
+    set abscissa(value = this.Abscissa.build()){ this.#abscissa = value }
 
     get ordinate(){ return this.#ordinate }
-    set ordinate(value = new Model()){ this.ordinate = value }
+    set ordinate(value = this.Ordinate.build()){ this.ordinate = value }
 
 }

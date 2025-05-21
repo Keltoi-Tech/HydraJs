@@ -1,38 +1,39 @@
 import knex from "knex";
-import Model from "./index.js";
+import Entity from "./entity";
+import { runWhenFalse } from "../helper";
 
 
-export default class Thing extends Model{
-    #name
+export default class Thing extends Entity{
     constructor({
         key={},
-        name=''
+        name='',
+        struct={}
     }){
-        super(key)
-        this.#name = name
+        super(key,{ name, ...struct });
     }
 
-    get name(){ return this.#name }
-    set name(value=''){ this.#name=value }    
+    get name(){ return this.data.name }
+    set name(value=''){ this.data.name = value }    
 
-    get entity(){
-        return { name:this.#name }
-    }
-
-    static makeMe(
+    static structMe(
         db=knex(),
         thing=Thing,
-        schema=(t=new knex.TableBuilder())=>{}
+        size = 255,
+        schema=(t)=>{}
     ){
-        return db.schema
-            .createTable(
-                thing.name,
-                table=>{
-                    schema(table)
+        return runWhenFalse(
+            db.schema.hasTable(thing.name),
+            ()=>Promise.resolve(
+                db.schema.createTable(
+                    thing.name,
+                    table=>{
+                        schema(table)
 
-                    table.string(255)
-                        .notNullable()
-                }
+                        table.string('name',size)
+                            .notNullable()
+                    }
+                )
             )
+        )
     }
 }
