@@ -448,13 +448,13 @@ let Repository$1 = class Repository{
 
     set context(value=knex()){ this.myContext=()=>value(this.#name); }
 
-    create = (entity = new Entity())=>
+    insert = (entity = new Entity())=>
         this.myContext()
             .insert(entity.$)
             .then(()=>new Result({data:entity}))
             .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
-    insert = (entity = new Entity())=>
+    create = (entity = new Entity())=>
         this.myContext()
             .insert(entity.data,Object.keys(entity.key))
             .then(ids=>new Result({ 
@@ -633,7 +633,7 @@ class DbLinked {
         this.#linking = link;
     }
 
-    createBatch = (linkings=[ new Linking() ])=>
+    insertBatch = (linkings=[ new Linking() ])=>
         this.myContext()
             .insert(
                 linkings.map(l => (
@@ -646,7 +646,7 @@ class DbLinked {
             .then(()=>new Result({data:linkings}))
             .catch(err=>Promise.reject(new Result({code:500,message:err})));
 
-    create = (linked=new Linking())=>   
+    insert = (linked=new Linking())=>   
         this.myContext()
             .insert({
                 ...linked.key,
@@ -662,7 +662,7 @@ class DbLinked {
                 .build({abscissa,ordinate:o})
             );
 
-        return this.createBatch(batch);
+        return this.insertBatch(batch);
     }
 
     insertAbscissasByOrdinate = ({ ordinate=new Entity(),abscissas=[new Entity()] })=>{
@@ -671,7 +671,7 @@ class DbLinked {
                 .build({abscissa:a,ordinate})
             );
 
-        return this.createBatch(batch)
+        return this.insertBatch(batch)
     }
 
     delete = (linked=new Linking())=>
@@ -771,7 +771,7 @@ let Context$1 = class Context{
 class Repository {
     #context
 
-    constructor(entity=Entity,context=new Context$1()){
+    constructor(context=new Context$1()){
         this.#context = context;
     }
 
@@ -785,8 +785,8 @@ class Repository {
 }
 
 class RestfulRepository extends Repository{
-    constructor(entity = Entity,context=new Context$1()){
-        super(entity,context);
+    constructor(context=new Context$1()){
+        super(context);
     }
 
     #keysAsParams(route='',key={}){
@@ -809,13 +809,6 @@ class RestfulRepository extends Repository{
         })
 
     get=(route='',query={}|undefined)=>this.#httpGet(route,query)
-        .then(value=>{
-            value.status === 200 
-                ? new Result({data:value.data}) 
-                : Promise.reject(new Result({code:value.status, message:value.statusText}));
-        })
-
-    list=(route='',query={}|undefined)=>this.#httpGet(route,query)
         .then(value=>{
             value.status === 200 
                 ? new Result({data:value.data}) 
@@ -857,7 +850,7 @@ class RestfulRepository extends Repository{
             })
     }
 
-    delete=(id,entity = new Entity())=>{
+    delete=(route='',entity = new Entity())=>{
         const url = this.#keysAsParams(route,entity.key);
 
         return this.context
