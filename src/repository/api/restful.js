@@ -1,11 +1,10 @@
 import Repository from "./base"
 import Context from "./context"
-
 import { Entity, Result } from "../../model"
 
 export default class RestfulRepository extends Repository{
-    constructor(entity = Entity,context=new Context()){
-        super(entity,context)
+    constructor(context=new Context()){
+        super(context)
     }
 
     #keysAsParams(route='',key={}){
@@ -28,13 +27,6 @@ export default class RestfulRepository extends Repository{
         })
 
     get=(route='',query={}|undefined)=>this.#httpGet(route,query)
-        .then(value=>{
-            value.status === 200 
-                ? new Result({data:value.data}) 
-                : Promise.reject(new Result({code:value.status, message:value.statusText}))
-        })
-
-    list=(route='',query={}|undefined)=>this.#httpGet(route,query)
         .then(value=>{
             value.status === 200 
                 ? new Result({data:value.data}) 
@@ -76,7 +68,7 @@ export default class RestfulRepository extends Repository{
             })
     }
 
-    delete=(id,entity = new Entity())=>{
+    delete=(route='',entity = new Entity())=>{
         const url = this.#keysAsParams(route,entity.key)
 
         return this.context

@@ -1,10 +1,9 @@
 import Context from "./context"
-import { Entity } from "../../model"
 
 export default class Repository {
     #context
 
-    constructor(entity=Entity,context=new Context()){
+    constructor(context=new Context()){
         this.#context = context
     }
 

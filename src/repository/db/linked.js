@@ -15,7 +15,7 @@ export default class DbLinked {
         this.#linking = link
     }
 
-    createBatch = (linkings=[ new Linking() ])=>
+    insertBatch = (linkings=[ new Linking() ])=>
         this.myContext()
             .insert(
                 linkings.map(l => (
@@ -28,7 +28,7 @@ export default class DbLinked {
             .then(()=>new Result({data:linkings}))
             .catch(err=>Promise.reject(new Result({code:500,message:err})));
 
-    create = (linked=new Linking())=>   
+    insert = (linked=new Linking())=>   
         this.myContext()
             .insert({
                 ...linked.key,
@@ -44,7 +44,7 @@ export default class DbLinked {
                 .build({abscissa,ordinate:o})
             )
 
-        return this.createBatch(batch);
+        return this.insertBatch(batch);
     }
 
     insertAbscissasByOrdinate = ({ ordinate=new Entity(),abscissas=[new Entity()] })=>{
@@ -53,7 +53,7 @@ export default class DbLinked {
                 .build({abscissa:a,ordinate})
             )
 
-        return this.createBatch(batch)
+        return this.insertBatch(batch)
     }
 
     delete = (linked=new Linking())=>

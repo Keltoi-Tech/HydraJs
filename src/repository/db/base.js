@@ -20,13 +20,13 @@ export default class Repository{
 
     set context(value=knex()){ this.myContext=()=>value(this.#name) }
 
-    create = (entity = new Entity())=>
+    insert = (entity = new Entity())=>
         this.myContext()
             .insert(entity.$)
             .then(()=>new Result({data:entity}))
             .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
-    insert = (entity = new Entity())=>
+    create = (entity = new Entity())=>
         this.myContext()
             .insert(entity.data,Object.keys(entity.key))
             .then(ids=>new Result({ 
