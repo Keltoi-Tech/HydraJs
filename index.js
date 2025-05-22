@@ -203,11 +203,11 @@ class Traceable extends Entity{
                 db.schema.createTable(
                     model.name,
                     table=>{
-                        schema(table);
-
                         table.dateTime('createdAt')
                             .notNullable()
                             .defaultTo(db.fn.now());
+
+                        schema(table);
                     }
                 )
             )
@@ -275,10 +275,10 @@ class Thing extends Entity{
                 db.schema.createTable(
                     thing.name,
                     table=>{
-                        schema(table);
-
                         table.string('name',size)
                             .notNullable();
+
+                        schema(table);
                     }
                 )
             )
@@ -318,8 +318,6 @@ class Changeable extends Entity{
             db.schema.hasTable(model.name),
             ()=>Promise.resolve(
                 db.schema.createTable(model.name,table=>{
-                    schema(table);
-
                     table.dateTime('createdAt')
                         .notNullable()
                         .defaultTo(db.fn.now());
@@ -329,6 +327,8 @@ class Changeable extends Entity{
 
                     table.boolean('active')
                         .defaultTo(true);
+
+                    schema(table);
                 })
             )
         )
@@ -460,44 +460,41 @@ let Repository$1 = class Repository{
             .then(ids=>new Result({ 
                 data:{ key: ids[0] }
             }))
-            .catch(err=>Promise.reject( 
-                new Result({code:500,message:err}) 
-            ))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     update = (entity = new Entity())=>
         this.myContext()
             .where(entity.key)
             .update(entity.data)
             .then(affected=>new Result({ data:affected }))
-            .catch(err=>Promise.reject( 
-                new Result({code:500,message:err}) 
-            ))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     delete = (entity = new Entity())=>
         this.myContext()
             .where(entity.key)
             .del()
             .then(affected=>new Result({ data:affected }))
-            .catch(err=>Promise.reject( 
-                new Result({code:500,message:err}) 
-            ))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     get = (entity = new Entity())=>
         this.myContext()
             .where(entity.key)
             .first()
-            .then(model=>{
-                if (!!model) return new Result({ data:model })
-
-                const error = new Result({code:404,message:'Not found'});
-
-                return Promise.reject(error)
-            })
+            .then(Repository.resultModelOrError)
 
     list = ()=>
         this.myContext()
             .select()
             .then(models=>new Result({ data:models }))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
+
+    static resultModelOrError(model){
+        if (!!model) return new Result({ data:model })
+
+        const error = new Result({code:404,message:'Not found'});
+
+        return Promise.reject(error)
+    }
 };
 
 class ChangeableRepository extends Repository$1{
@@ -511,6 +508,7 @@ class ChangeableRepository extends Repository$1{
             .select()
             .orderBy(['createdAt','updatedAt'],order)
             .then(result => new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     before = (date = new Date(), order = 'asc') =>
         this.myContext()
@@ -519,6 +517,7 @@ class ChangeableRepository extends Repository$1{
             .select()
             .orderBy(['createdAt','updatedAt'],order)
             .then(result => new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))            
 
     after = (date=new Date(), order = 'asc') =>
         this.myContext()
@@ -527,6 +526,7 @@ class ChangeableRepository extends Repository$1{
             .select()
             .orderBy(['createdAt','updatedAt'],order)
             .then(result => new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     list = (order = 'asc') =>
         this.myContext()
@@ -534,32 +534,21 @@ class ChangeableRepository extends Repository$1{
             .select()
             .orderBy(['createdAt','updatedAt'],order)
             .then(result => new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     last = () =>
         this.myContext()
             .where({active:true})
             .first()
             .orderBy('createdAt',"desc")
-            .then(result => {
-                if (!!result) return result
-
-                const error = new Result({code:404,message:'Not found'});
-
-                return Promise.reject(error)
-            })
+            .then(Repository$1.resultModelOrError)
 
     first = () =>
         this.myContext()
             .where({active:true})
             .first()
             .orderBy('createdAt',"asc")
-            .then(result => {
-                if (!!result) return result
-
-                const error = new Result({code:404,message:'Not found'});
-
-                return Promise.reject(error)
-            })
+            .then(Repository$1.resultModelOrError)
 }
 
 class TraceableRepository extends Repository$1{
@@ -571,13 +560,8 @@ class TraceableRepository extends Repository$1{
         this.myContext()
             .where(traceable.key)
             .first()
-            .then(model => {
-                if (!!model) return model
-
-                const error = new Result({code:404,message:'Not found'});
-
-                return Promise.reject(error)
-            })
+            .then(Repository$1.resultModelOrError)
+            .catch(err=>Promise.reject( new Result({code:500,message:err})) )
 
     before = (date = new Date(), order = 'asc') =>
         this.myContext()
@@ -585,6 +569,7 @@ class TraceableRepository extends Repository$1{
             .select()
             .orderBy('createdAt',order)
             .then(result => new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err})) )
 
     after = (date = new Date(), order = 'asc') =>
         this.myContext()
@@ -592,16 +577,18 @@ class TraceableRepository extends Repository$1{
             .select()
             .orderBy('createdAt',order)
             .then(result => new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err})) )
 
     list = (order='asc') =>
         this.myContext()
             .select()
             .orderBy('createdAt',order)
             .then(result => new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err})) )
 
-    update = () => Promise.reject(new Result({code:400,message:'Cannot update a logged object'}))
+    update = () => Promise.reject( new Result({code:400,message:'Cannot update a logged object'}) )
 
-    delete = () => Promise.reject(new Result({code:400,message:'Cannot delete a logged object'}))
+    delete = () => Promise.reject( new Result({code:400,message:'Cannot delete a logged object'}) )
     
 }
 
@@ -618,7 +605,7 @@ class ThingRepository extends Repository$1{
                 ?new Result({data:result})
                 :new Result({code:404,message:'Not found'})
             )
-            .catch(err=>Promise.reject(new Result({code:500,message:err})))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 }
 
 class DbLinked {
@@ -700,6 +687,7 @@ class DbLinked {
                 })
             )
             .then(result=>new Result({data:result}))
+            .catch(err=>Promise.reject(new Result({code:500,message:err})));
     }
 
     getOrdinatesByAbscissa(linked=new Linking()){
@@ -720,6 +708,7 @@ class DbLinked {
                 })
             )
             .then(result=>new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ));
     }
 
 }
