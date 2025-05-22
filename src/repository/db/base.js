@@ -38,14 +38,20 @@ export default class Repository{
         this.myContext()
             .where(entity.key)
             .update(entity.data)
-            .then(affected=>new Result({ data:affected }))
+            .then(affected=> affected > 0 
+                ? new Result({ code:200,message:`${this.#name} updated` }) 
+                : new Result({ code:404,message:'Not found' })
+            )
             .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     delete = (entity = new Entity())=>
         this.myContext()
             .where(entity.key)
             .del()
-            .then(affected=>new Result({ data:affected }))
+            .then(affected=> affected > 0 
+                ? new Result({ code:200,message:`${this.#name} deleted` })
+                : new Result({ code:404,message:'Not found' })
+            )
             .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     get = (entity = new Entity())=>
