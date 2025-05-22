@@ -24,11 +24,11 @@ export default class Traceable extends Entity{
                 db.schema.createTable(
                     model.name,
                     table=>{
-                        schema(table)
-
                         table.dateTime('createdAt')
                             .notNullable()
                             .defaultTo(db.fn.now())
+
+                        schema(table)
                     }
                 )
             )
