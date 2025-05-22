@@ -32,42 +32,39 @@ export default class Repository{
             .then(ids=>new Result({ 
                 data:{ key: ids[0] }
             }))
-            .catch(err=>Promise.reject( 
-                new Result({code:500,message:err}) 
-            ))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     update = (entity = new Entity())=>
         this.myContext()
             .where(entity.key)
             .update(entity.data)
             .then(affected=>new Result({ data:affected }))
-            .catch(err=>Promise.reject( 
-                new Result({code:500,message:err}) 
-            ))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     delete = (entity = new Entity())=>
         this.myContext()
             .where(entity.key)
             .del()
             .then(affected=>new Result({ data:affected }))
-            .catch(err=>Promise.reject( 
-                new Result({code:500,message:err}) 
-            ))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     get = (entity = new Entity())=>
         this.myContext()
             .where(entity.key)
             .first()
-            .then(model=>{
-                if (!!model) return new Result({ data:model })
-
-                const error = new Result({code:404,message:'Not found'})
-
-                return Promise.reject(error)
-            })
+            .then(Repository.resultModelOrError)
 
     list = ()=>
         this.myContext()
             .select()
             .then(models=>new Result({ data:models }))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
+
+    static resultModelOrError(model){
+        if (!!model) return new Result({ data:model })
+
+        const error = new Result({code:404,message:'Not found'})
+
+        return Promise.reject(error)
+    }
 }

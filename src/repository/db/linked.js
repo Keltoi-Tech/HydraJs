@@ -82,6 +82,7 @@ export default class DbLinked {
                 })
             )
             .then(result=>new Result({data:result}))
+            .catch(err=>Promise.reject(new Result({code:500,message:err})));
     }
 
     getOrdinatesByAbscissa(linked=new Linking()){
@@ -102,6 +103,7 @@ export default class DbLinked {
                 })
             )
             .then(result=>new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ));
     }
 
 }
