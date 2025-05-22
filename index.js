@@ -88,6 +88,10 @@ class Entity{
     static fromResult(result=new Result()){
         if(result.isError) return Promise.reject(result)
     }   
+
+    static collectionfromResult(result=new Result()){
+        if(result.isError) return Promise.reject(result)
+    }
 }
 
 class Model {
