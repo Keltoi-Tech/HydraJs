@@ -29,9 +29,11 @@ export default class Repository{
     create = (entity = new Entity())=>
         this.myContext()
             .insert(entity.data,Object.keys(entity.key))
-            .then(ids=>new Result({ 
-                data:{ key: ids[0] }
-            }))
+            .then(ids=>{
+                entity.key = ids[0]
+
+                return new Result({  data:entity.$ })
+            })
             .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     update = (entity = new Entity())=>

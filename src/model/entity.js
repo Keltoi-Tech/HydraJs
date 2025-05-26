@@ -13,6 +13,8 @@ export default class Entity{
     get key(){ return this.#key }
     get data(){ return this.#data }
 
+    set key(value = {}){ this.#key = value }
+
     get $(){ 
         return { ...this.#key, ...this.#data }
     }
