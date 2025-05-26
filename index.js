@@ -71,6 +71,8 @@ class Entity{
     get key(){ return this.#key }
     get data(){ return this.#data }
 
+    set key(value = {}){ this.#key = value; }
+
     get $(){ 
         return { ...this.#key, ...this.#data }
     }
@@ -461,9 +463,11 @@ let Repository$1 = class Repository{
     create = (entity = new Entity())=>
         this.myContext()
             .insert(entity.data,Object.keys(entity.key))
-            .then(ids=>new Result({ 
-                data:{ key: ids[0] }
-            }))
+            .then(ids=>{
+                entity.key = ids[0];
+
+                return new Result({  data:entity.$ })
+            })
             .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     update = (entity = new Entity())=>
