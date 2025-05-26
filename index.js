@@ -466,7 +466,7 @@ let Repository$1 = class Repository{
             .then(ids=>{
                 entity.key = ids[0];
 
-                return new Result({  data:entity.$ })
+                return new Result({  data:entity })
             })
             .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
