@@ -1,6 +1,6 @@
 import knex from "knex"
-import { runWhenFalse } from "../helper"
 import Entity from "./entity"
+import { runWhenFalse } from "../helper"
 
 export default class Traceable extends Entity{
     constructor({

@@ -475,7 +475,7 @@ let Repository$1 = class Repository{
             .where(entity.key)
             .update(entity.data)
             .then(affected=> affected > 0 
-                ? new Result({ code:200,message:`${this.#name} updated` }) 
+                ? new Result({ code:200,data:`${this.#name} updated` }) 
                 : new Result({ code:404,message:'Not found' })
             )
             .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
@@ -485,7 +485,7 @@ let Repository$1 = class Repository{
             .where(entity.key)
             .del()
             .then(affected=> affected > 0 
-                ? new Result({ code:200,message:`${this.#name} deleted` })
+                ? new Result({ code:200,data:`${this.#name} deleted` })
                 : new Result({ code:404,message:'Not found' })
             )
             .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
