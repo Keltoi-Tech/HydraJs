@@ -97,9 +97,7 @@ class Entity{
 }
 
 class Model {
-    constructor({}) {
-        
-    }
+    constructor() {}
 
     static fromEntity(entity = new Entity()) {
         return new Model(entity.$)
