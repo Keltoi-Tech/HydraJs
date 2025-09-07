@@ -7,6 +7,26 @@ export default class ChangeableRepository extends Repository{
         super(entity,context)
     }
 
+    reactive = (entity = new Changeable())=>
+        this.myContext()
+            .where(entity.key)
+            .update({active:true})
+            .then(affected=> affected > 0 
+                ? new Result({ code:200,data:`${this.name} updated` }) 
+                : new Result({ code:404,message:'Not found' })
+            )
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
+
+    remove = (entity = new Changeable())=>
+        this.myContext()
+            .where(entity.key)
+            .update({active:false})
+            .then(affected=> affected > 0 
+                ? new Result({ code:200,data:`${this.name} updated` }) 
+                : new Result({ code:404,message:'Not found' })
+            )
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
+
     deceased = (order = 'asc') =>
         this.myContext()
             .where({active:false})

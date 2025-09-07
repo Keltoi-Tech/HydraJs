@@ -7,6 +7,8 @@ export default class Repository{
 
     myContext
 
+    get name(){ return this.#name }
+
     constructor(entity=Entity,context=new Context())
     {
         this.#name = entity.name

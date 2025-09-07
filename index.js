@@ -439,6 +439,8 @@ let Repository$1 = class Repository{
 
     myContext
 
+    get name(){ return this.#name }
+
     constructor(entity=Entity,context=new Context$2())
     {
         this.#name = entity.name;
@@ -513,6 +515,26 @@ class ChangeableRepository extends Repository$1{
     constructor(entity = Changeable,context=new Context$2()){
         super(entity,context);
     }
+
+    reactive = (entity = new Changeable())=>
+        this.myContext()
+            .where(entity.key)
+            .update({active:true})
+            .then(affected=> affected > 0 
+                ? new Result({ code:200,data:`${this.name} updated` }) 
+                : new Result({ code:404,message:'Not found' })
+            )
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
+
+    remove = (entity = new Changeable())=>
+        this.myContext()
+            .where(entity.key)
+            .update({active:false})
+            .then(affected=> affected > 0 
+                ? new Result({ code:200,data:`${this.name} updated` }) 
+                : new Result({ code:404,message:'Not found' })
+            )
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     deceased = (order = 'asc') =>
         this.myContext()
