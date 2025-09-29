@@ -60,7 +60,11 @@ export default class DbLinked {
         this.myContext()
             .where(linked.key)
             .del()
-            .then(affected=>new Result({data:affected}))
+            .then(affected=>
+                affected > 0 
+                    ?new Result({data:affected})
+                    :new Result({code:404,message:'Not found'})
+            )
             .catch(err=>Promise.reject(new Result({code:500,message:err})))
     
 
