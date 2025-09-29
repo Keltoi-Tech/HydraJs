@@ -34,8 +34,6 @@ export default class Changeable extends Entity{
             db.schema.hasTable(model.name),
             ()=>Promise.resolve(
                 db.schema.createTable(model.name,table=>{
-                    schema(table)
-
                     table.dateTime('createdAt')
                         .notNullable()
                         .defaultTo(db.fn.now())
@@ -45,6 +43,8 @@ export default class Changeable extends Entity{
 
                     table.boolean('active')
                         .defaultTo(true)
+
+                    schema(table)
                 })
             )
         )

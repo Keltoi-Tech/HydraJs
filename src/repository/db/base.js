@@ -7,6 +7,8 @@ export default class Repository{
 
     myContext
 
+    get name(){ return this.#name }
+
     constructor(entity=Entity,context=new Context())
     {
         this.#name = entity.name
@@ -29,45 +31,50 @@ export default class Repository{
     create = (entity = new Entity())=>
         this.myContext()
             .insert(entity.data,Object.keys(entity.key))
-            .then(ids=>new Result({ 
-                data:{ key: ids[0] }
-            }))
-            .catch(err=>Promise.reject( 
-                new Result({code:500,message:err}) 
-            ))
+            .then(ids=>{
+                entity.key = ids[0]
+
+                return new Result({  data:entity })
+            })
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     update = (entity = new Entity())=>
         this.myContext()
             .where(entity.key)
             .update(entity.data)
-            .then(affected=>new Result({ data:affected }))
-            .catch(err=>Promise.reject( 
-                new Result({code:500,message:err}) 
-            ))
+            .then(affected=> affected > 0 
+                ? new Result({ code:200,data:`${this.#name} updated` }) 
+                : new Result({ code:404,message:'Not found' })
+            )
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     delete = (entity = new Entity())=>
         this.myContext()
             .where(entity.key)
             .del()
-            .then(affected=>new Result({ data:affected }))
-            .catch(err=>Promise.reject( 
-                new Result({code:500,message:err}) 
-            ))
+            .then(affected=> affected > 0 
+                ? new Result({ code:200,data:`${this.#name} deleted` })
+                : new Result({ code:404,message:'Not found' })
+            )
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     get = (entity = new Entity())=>
         this.myContext()
             .where(entity.key)
             .first()
-            .then(model=>{
-                if (!!model) return new Result({ data:model })
-
-                const error = new Result({code:404,message:'Not found'})
-
-                return Promise.reject(error)
-            })
+            .then(Repository.resultModelOrError)
 
     list = ()=>
         this.myContext()
             .select()
             .then(models=>new Result({ data:models }))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
+
+    static resultModelOrError(model){
+        if (!!model) return new Result({ data:model })
+
+        const error = new Result({code:404,message:'Not found'})
+
+        return Promise.reject(error)
+    }
 }

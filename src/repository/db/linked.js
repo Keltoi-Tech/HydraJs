@@ -60,7 +60,11 @@ export default class DbLinked {
         this.myContext()
             .where(linked.key)
             .del()
-            .then(affected=>new Result({data:affected}))
+            .then(affected=>
+                affected > 0 
+                    ?new Result({data:affected})
+                    :new Result({code:404,message:'Not found'})
+            )
             .catch(err=>Promise.reject(new Result({code:500,message:err})))
     
 
@@ -82,6 +86,7 @@ export default class DbLinked {
                 })
             )
             .then(result=>new Result({data:result}))
+            .catch(err=>Promise.reject(new Result({code:500,message:err})));
     }
 
     getOrdinatesByAbscissa(linked=new Linking()){
@@ -102,6 +107,7 @@ export default class DbLinked {
                 })
             )
             .then(result=>new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ));
     }
 
 }

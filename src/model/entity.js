@@ -13,6 +13,8 @@ export default class Entity{
     get key(){ return this.#key }
     get data(){ return this.#data }
 
+    set key(value = {}){ this.#key = value }
+
     get $(){ 
         return { ...this.#key, ...this.#data }
     }
@@ -30,4 +32,8 @@ export default class Entity{
     static fromResult(result=new Result()){
         if(result.isError) return Promise.reject(result)
     }   
+
+    static collectionfromResult(result=new Result()){
+        if(result.isError) return Promise.reject(result)
+    }
 }

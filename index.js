@@ -71,6 +71,8 @@ class Entity{
     get key(){ return this.#key }
     get data(){ return this.#data }
 
+    set key(value = {}){ this.#key = value; }
+
     get $(){ 
         return { ...this.#key, ...this.#data }
     }
@@ -88,12 +90,14 @@ class Entity{
     static fromResult(result=new Result()){
         if(result.isError) return Promise.reject(result)
     }   
+
+    static collectionfromResult(result=new Result()){
+        if(result.isError) return Promise.reject(result)
+    }
 }
 
 class Model {
-    constructor({}) {
-        
-    }
+    constructor() {}
 
     static fromEntity(entity = new Entity()) {
         return new Model(entity.$)
@@ -108,6 +112,7 @@ class Linking{
     #AbscissaEntity=Entity
     #OrdinateEntity=Entity
 
+    static get name(){ return null }
 
     get Abscissa(){
         return this.#AbscissaEntity
@@ -145,7 +150,7 @@ class Linking{
         ordinate=Entity,
         schema=(t)=>{}
     ){
-        const tableName = `${abscissa.name}${ordinate.name}`;
+        const tableName = this.name ?? `${abscissa.name}${ordinate.name}`;
 
         return runWhenFalse(
             db.schema.hasTable(tableName),
@@ -155,6 +160,7 @@ class Linking{
         )
     }
 
+    static migrations(){ return [] }
 
     get abscissaKey(){
         return { idAbscissa: this.#abscissa.key }
@@ -203,11 +209,11 @@ class Traceable extends Entity{
                 db.schema.createTable(
                     model.name,
                     table=>{
-                        schema(table);
-
                         table.dateTime('createdAt')
                             .notNullable()
                             .defaultTo(db.fn.now());
+
+                        schema(table);
                     }
                 )
             )
@@ -275,10 +281,10 @@ class Thing extends Entity{
                 db.schema.createTable(
                     thing.name,
                     table=>{
-                        schema(table);
-
                         table.string('name',size)
                             .notNullable();
+
+                        schema(table);
                     }
                 )
             )
@@ -318,8 +324,6 @@ class Changeable extends Entity{
             db.schema.hasTable(model.name),
             ()=>Promise.resolve(
                 db.schema.createTable(model.name,table=>{
-                    schema(table);
-
                     table.dateTime('createdAt')
                         .notNullable()
                         .defaultTo(db.fn.now());
@@ -329,6 +333,8 @@ class Changeable extends Entity{
 
                     table.boolean('active')
                         .defaultTo(true);
+
+                    schema(table);
                 })
             )
         )
@@ -435,6 +441,8 @@ let Repository$1 = class Repository{
 
     myContext
 
+    get name(){ return this.#name }
+
     constructor(entity=Entity,context=new Context$2())
     {
         this.#name = entity.name;
@@ -448,56 +456,61 @@ let Repository$1 = class Repository{
 
     set context(value=knex()){ this.myContext=()=>value(this.#name); }
 
-    create = (entity = new Entity())=>
+    insert = (entity = new Entity())=>
         this.myContext()
             .insert(entity.$)
             .then(()=>new Result({data:entity}))
             .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
-    insert = (entity = new Entity())=>
+    create = (entity = new Entity())=>
         this.myContext()
             .insert(entity.data,Object.keys(entity.key))
-            .then(ids=>new Result({ 
-                data:{ key: ids[0] }
-            }))
-            .catch(err=>Promise.reject( 
-                new Result({code:500,message:err}) 
-            ))
+            .then(ids=>{
+                entity.key = ids[0];
+
+                return new Result({  data:entity })
+            })
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     update = (entity = new Entity())=>
         this.myContext()
             .where(entity.key)
             .update(entity.data)
-            .then(affected=>new Result({ data:affected }))
-            .catch(err=>Promise.reject( 
-                new Result({code:500,message:err}) 
-            ))
+            .then(affected=> affected > 0 
+                ? new Result({ code:200,data:`${this.#name} updated` }) 
+                : new Result({ code:404,message:'Not found' })
+            )
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     delete = (entity = new Entity())=>
         this.myContext()
             .where(entity.key)
             .del()
-            .then(affected=>new Result({ data:affected }))
-            .catch(err=>Promise.reject( 
-                new Result({code:500,message:err}) 
-            ))
+            .then(affected=> affected > 0 
+                ? new Result({ code:200,data:`${this.#name} deleted` })
+                : new Result({ code:404,message:'Not found' })
+            )
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     get = (entity = new Entity())=>
         this.myContext()
             .where(entity.key)
             .first()
-            .then(model=>{
-                if (!!model) return new Result({ data:model })
-
-                const error = new Result({code:404,message:'Not found'});
-
-                return Promise.reject(error)
-            })
+            .then(Repository.resultModelOrError)
 
     list = ()=>
         this.myContext()
             .select()
             .then(models=>new Result({ data:models }))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
+
+    static resultModelOrError(model){
+        if (!!model) return new Result({ data:model })
+
+        const error = new Result({code:404,message:'Not found'});
+
+        return Promise.reject(error)
+    }
 };
 
 class ChangeableRepository extends Repository$1{
@@ -505,12 +518,33 @@ class ChangeableRepository extends Repository$1{
         super(entity,context);
     }
 
+    reactive = (entity = new Changeable())=>
+        this.myContext()
+            .where(entity.key)
+            .update({active:true})
+            .then(affected=> affected > 0 
+                ? new Result({ code:200,data:`${this.name} updated` }) 
+                : new Result({ code:404,message:'Not found' })
+            )
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
+
+    remove = (entity = new Changeable())=>
+        this.myContext()
+            .where(entity.key)
+            .update({active:false})
+            .then(affected=> affected > 0 
+                ? new Result({ code:200,data:`${this.name} updated` }) 
+                : new Result({ code:404,message:'Not found' })
+            )
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
+
     deceased = (order = 'asc') =>
         this.myContext()
             .where({active:false})
             .select()
             .orderBy(['createdAt','updatedAt'],order)
             .then(result => new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     before = (date = new Date(), order = 'asc') =>
         this.myContext()
@@ -519,6 +553,7 @@ class ChangeableRepository extends Repository$1{
             .select()
             .orderBy(['createdAt','updatedAt'],order)
             .then(result => new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))            
 
     after = (date=new Date(), order = 'asc') =>
         this.myContext()
@@ -527,6 +562,7 @@ class ChangeableRepository extends Repository$1{
             .select()
             .orderBy(['createdAt','updatedAt'],order)
             .then(result => new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     list = (order = 'asc') =>
         this.myContext()
@@ -534,32 +570,21 @@ class ChangeableRepository extends Repository$1{
             .select()
             .orderBy(['createdAt','updatedAt'],order)
             .then(result => new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     last = () =>
         this.myContext()
             .where({active:true})
             .first()
             .orderBy('createdAt',"desc")
-            .then(result => {
-                if (!!result) return result
-
-                const error = new Result({code:404,message:'Not found'});
-
-                return Promise.reject(error)
-            })
+            .then(Repository$1.resultModelOrError)
 
     first = () =>
         this.myContext()
             .where({active:true})
             .first()
             .orderBy('createdAt',"asc")
-            .then(result => {
-                if (!!result) return result
-
-                const error = new Result({code:404,message:'Not found'});
-
-                return Promise.reject(error)
-            })
+            .then(Repository$1.resultModelOrError)
 }
 
 class TraceableRepository extends Repository$1{
@@ -571,13 +596,8 @@ class TraceableRepository extends Repository$1{
         this.myContext()
             .where(traceable.key)
             .first()
-            .then(model => {
-                if (!!model) return model
-
-                const error = new Result({code:404,message:'Not found'});
-
-                return Promise.reject(error)
-            })
+            .then(Repository$1.resultModelOrError)
+            .catch(err=>Promise.reject( new Result({code:500,message:err})) )
 
     before = (date = new Date(), order = 'asc') =>
         this.myContext()
@@ -585,6 +605,7 @@ class TraceableRepository extends Repository$1{
             .select()
             .orderBy('createdAt',order)
             .then(result => new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err})) )
 
     after = (date = new Date(), order = 'asc') =>
         this.myContext()
@@ -592,16 +613,18 @@ class TraceableRepository extends Repository$1{
             .select()
             .orderBy('createdAt',order)
             .then(result => new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err})) )
 
     list = (order='asc') =>
         this.myContext()
             .select()
             .orderBy('createdAt',order)
             .then(result => new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err})) )
 
-    update = () => Promise.reject(new Result({code:400,message:'Cannot update a logged object'}))
+    update = () => Promise.reject( new Result({code:400,message:'Cannot update a logged object'}) )
 
-    delete = () => Promise.reject(new Result({code:400,message:'Cannot delete a logged object'}))
+    delete = () => Promise.reject( new Result({code:400,message:'Cannot delete a logged object'}) )
     
 }
 
@@ -618,7 +641,7 @@ class ThingRepository extends Repository$1{
                 ?new Result({data:result})
                 :new Result({code:404,message:'Not found'})
             )
-            .catch(err=>Promise.reject(new Result({code:500,message:err})))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 }
 
 class DbLinked {
@@ -633,7 +656,7 @@ class DbLinked {
         this.#linking = link;
     }
 
-    createBatch = (linkings=[ new Linking() ])=>
+    insertBatch = (linkings=[ new Linking() ])=>
         this.myContext()
             .insert(
                 linkings.map(l => (
@@ -646,7 +669,7 @@ class DbLinked {
             .then(()=>new Result({data:linkings}))
             .catch(err=>Promise.reject(new Result({code:500,message:err})));
 
-    create = (linked=new Linking())=>   
+    insert = (linked=new Linking())=>   
         this.myContext()
             .insert({
                 ...linked.key,
@@ -662,7 +685,7 @@ class DbLinked {
                 .build({abscissa,ordinate:o})
             );
 
-        return this.createBatch(batch);
+        return this.insertBatch(batch);
     }
 
     insertAbscissasByOrdinate = ({ ordinate=new Entity(),abscissas=[new Entity()] })=>{
@@ -671,14 +694,18 @@ class DbLinked {
                 .build({abscissa:a,ordinate})
             );
 
-        return this.createBatch(batch)
+        return this.insertBatch(batch)
     }
 
     delete = (linked=new Linking())=>
         this.myContext()
             .where(linked.key)
             .del()
-            .then(affected=>new Result({data:affected}))
+            .then(affected=>
+                affected > 0 
+                    ?new Result({data:affected})
+                    :new Result({code:404,message:'Not found'})
+            )
             .catch(err=>Promise.reject(new Result({code:500,message:err})))
     
 
@@ -700,6 +727,7 @@ class DbLinked {
                 })
             )
             .then(result=>new Result({data:result}))
+            .catch(err=>Promise.reject(new Result({code:500,message:err})));
     }
 
     getOrdinatesByAbscissa(linked=new Linking()){
@@ -720,6 +748,7 @@ class DbLinked {
                 })
             )
             .then(result=>new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ));
     }
 
 }
@@ -771,7 +800,7 @@ let Context$1 = class Context{
 class Repository {
     #context
 
-    constructor(entity=Entity,context=new Context$1()){
+    constructor(context=new Context$1()){
         this.#context = context;
     }
 
@@ -785,8 +814,8 @@ class Repository {
 }
 
 class RestfulRepository extends Repository{
-    constructor(entity = Entity,context=new Context$1()){
-        super(entity,context);
+    constructor(context=new Context$1()){
+        super(context);
     }
 
     #keysAsParams(route='',key={}){
@@ -809,13 +838,6 @@ class RestfulRepository extends Repository{
         })
 
     get=(route='',query={}|undefined)=>this.#httpGet(route,query)
-        .then(value=>{
-            value.status === 200 
-                ? new Result({data:value.data}) 
-                : Promise.reject(new Result({code:value.status, message:value.statusText}));
-        })
-
-    list=(route='',query={}|undefined)=>this.#httpGet(route,query)
         .then(value=>{
             value.status === 200 
                 ? new Result({data:value.data}) 
@@ -857,7 +879,7 @@ class RestfulRepository extends Repository{
             })
     }
 
-    delete=(id,entity = new Entity())=>{
+    delete=(route='',entity = new Entity())=>{
         const url = this.#keysAsParams(route,entity.key);
 
         return this.context

@@ -27,10 +27,10 @@ export default class Thing extends Entity{
                 db.schema.createTable(
                     thing.name,
                     table=>{
-                        schema(table)
-
                         table.string('name',size)
                             .notNullable()
+
+                        schema(table)
                     }
                 )
             )

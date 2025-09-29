@@ -1,6 +1,6 @@
 import knex from "knex"
-import { runWhenFalse } from "../helper"
 import Entity from "./entity"
+import { runWhenFalse } from "../helper"
 
 export default class Traceable extends Entity{
     constructor({
@@ -24,11 +24,11 @@ export default class Traceable extends Entity{
                 db.schema.createTable(
                     model.name,
                     table=>{
-                        schema(table)
-
                         table.dateTime('createdAt')
                             .notNullable()
                             .defaultTo(db.fn.now())
+
+                        schema(table)
                     }
                 )
             )

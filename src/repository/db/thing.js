@@ -14,5 +14,5 @@ export default class ThingRepository extends Repository{
                 ?new Result({data:result})
                 :new Result({code:404,message:'Not found'})
             )
-            .catch(err=>Promise.reject(new Result({code:500,message:err})))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 }

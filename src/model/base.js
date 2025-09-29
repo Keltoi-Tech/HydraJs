@@ -1,9 +1,7 @@
 import Entity from "./entity"
 
 export default class Model {
-    constructor({}) {
-        
-    }
+    constructor() {}
 
     static fromEntity(entity = new Entity()) {
         return new Model(entity.$)

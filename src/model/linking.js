@@ -8,6 +8,7 @@ export default class Linking{
     #AbscissaEntity=Entity
     #OrdinateEntity=Entity
 
+    static get name(){ return null }
 
     get Abscissa(){
         return this.#AbscissaEntity
@@ -45,7 +46,7 @@ export default class Linking{
         ordinate=Entity,
         schema=(t)=>{}
     ){
-        const tableName = `${abscissa.name}${ordinate.name}`
+        const tableName = this.name ?? `${abscissa.name}${ordinate.name}`
 
         return runWhenFalse(
             db.schema.hasTable(tableName),
@@ -55,6 +56,7 @@ export default class Linking{
         )
     }
 
+    static migrations(){ return [] }
 
     get abscissaKey(){
         return { idAbscissa: this.#abscissa.key }

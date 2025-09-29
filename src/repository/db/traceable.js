@@ -11,13 +11,8 @@ export default class TraceableRepository extends Repository{
         this.myContext()
             .where(traceable.key)
             .first()
-            .then(model => {
-                if (!!model) return model
-
-                const error = new Result({code:404,message:'Not found'})
-
-                return Promise.reject(error)
-            })
+            .then(Repository.resultModelOrError)
+            .catch(err=>Promise.reject( new Result({code:500,message:err})) )
 
     before = (date = new Date(), order = 'asc') =>
         this.myContext()
@@ -25,6 +20,7 @@ export default class TraceableRepository extends Repository{
             .select()
             .orderBy('createdAt',order)
             .then(result => new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err})) )
 
     after = (date = new Date(), order = 'asc') =>
         this.myContext()
@@ -32,15 +28,17 @@ export default class TraceableRepository extends Repository{
             .select()
             .orderBy('createdAt',order)
             .then(result => new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err})) )
 
     list = (order='asc') =>
         this.myContext()
             .select()
             .orderBy('createdAt',order)
             .then(result => new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err})) )
 
-    update = () => Promise.reject(new Result({code:400,message:'Cannot update a logged object'}))
+    update = () => Promise.reject( new Result({code:400,message:'Cannot update a logged object'}) )
 
-    delete = () => Promise.reject(new Result({code:400,message:'Cannot delete a logged object'}))
+    delete = () => Promise.reject( new Result({code:400,message:'Cannot delete a logged object'}) )
     
 }
