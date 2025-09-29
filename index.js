@@ -159,6 +159,7 @@ class Linking{
         )
     }
 
+    static migrations(){ return [] }
 
     get abscissaKey(){
         return { idAbscissa: this.#abscissa.key }
