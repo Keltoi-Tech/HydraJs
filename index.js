@@ -112,6 +112,7 @@ class Linking{
     #AbscissaEntity=Entity
     #OrdinateEntity=Entity
 
+    static get name(){ return null }
 
     get Abscissa(){
         return this.#AbscissaEntity
@@ -149,7 +150,7 @@ class Linking{
         ordinate=Entity,
         schema=(t)=>{}
     ){
-        const tableName = `${abscissa.name}${ordinate.name}`;
+        const tableName = this.name ?? `${abscissa.name}${ordinate.name}`;
 
         return runWhenFalse(
             db.schema.hasTable(tableName),
