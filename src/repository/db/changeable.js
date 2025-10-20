@@ -10,7 +10,10 @@ export default class ChangeableRepository extends Repository{
     reactive = (entity = new Changeable())=>
         this.myContext()
             .where(entity.key)
-            .update({active:true})
+            .update({
+                active:true, 
+                updatedAt:entity.updatedAt
+            })
             .then(affected=> affected > 0 
                 ? new Result({ code:200,data:`${this.name} updated` }) 
                 : new Result({ code:404,message:'Not found' })
@@ -20,7 +23,10 @@ export default class ChangeableRepository extends Repository{
     remove = (entity = new Changeable())=>
         this.myContext()
             .where(entity.key)
-            .update({active:false})
+            .update({
+                active:false,
+                updatedAt:entity.updatedAt
+            })
             .then(affected=> affected > 0 
                 ? new Result({ code:200,data:`${this.name} updated` }) 
                 : new Result({ code:404,message:'Not found' })

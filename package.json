@@ -1,6 +1,6 @@
 {
   "name": "@keltoi/hydra",
-  "version": "2.2.2",
+  "version": "2.2.3",
   "description": "Boilerplate to start your API from zero using Repository Pattern",
   "main": "index.js",
   "module": "index.js",
@@ -16,10 +16,7 @@
     "type": "git",
     "url": "git+https://github.com/Keltoi-Tech/HydraJs.git"
   },
-  "keywords": [
-    "API",
-    "RepositoryPattern"
-  ],
+  "keywords": [ "API", "RepositoryPattern" ],
   "author": "DaniloHenrique",
   "license": "MIT",
   "bugs": {
