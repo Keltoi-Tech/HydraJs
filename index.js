@@ -359,10 +359,14 @@ class Migration{
         .where({ name })
         .update({ iteration })
 
+    #create = ({ iteration=0,name='' })=>this
+        .#db('migration')
+        .insert({ iteration,name }) 
+
     async runMigrations({ entity = Entity, migrations=[async ()=>{}] }){
         const name = entity.name;
 
-        const { iteration } = await this.#get(name);
+        const { iteration } = await this.#get({ name });
 
         const listSize = migrations.length;
 
@@ -372,7 +376,8 @@ class Migration{
             await migrations[index]();
         }
 
-        await this.#update({ iteration:listSize,name });
+        if (listSize === 1) await this.#create({ iteration:listSize,name });
+        else await this.#update({ iteration:listSize,name });
     }
 
     static structMe(db=knex()){
