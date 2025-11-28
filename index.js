@@ -358,7 +358,11 @@ class Migration{
         .#db('migration')
         .where({ name })
         .update({ iteration })
-        .catch(()=>this.#db('migration').insert({ iteration,name }))
+        .then(affected=>{
+            if (affected == 0) return this
+                .#db('migration')
+                .insert({ iteration,name })
+        })
 
     async runMigrations({ entity = Entity, migrations=[async ()=>{}] }){
         const name = entity.name;
@@ -369,7 +373,9 @@ class Migration{
 
         if (iteration >= listSize) return
 
-        for (let index = iteration; index < listSize; index++) await migrations[index]();
+        for (let index = iteration; index < listSize; index++) 
+            await migrations[index]()
+                    .catch(err=>console.log(err));
 
         await this.#update({ iteration:listSize,name });
     }
@@ -425,9 +431,13 @@ let Context$2 = class Context{
         const migration = new Migration(this.#db);
 
         const promises = models.map(model=>
-            model.structMe(this.#db)
+            model
+                .structMe(this.#db)
                 .then(()=>migration
-                    .runMigrations({ entity: model, migrations: model.migrations(this.#db) })
+                    .runMigrations({ 
+                        entity: model, 
+                        migrations: model.migrations(this.#db) 
+                    })
                 )
         );        
 

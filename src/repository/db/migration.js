@@ -19,7 +19,11 @@ export default class Migration{
         .#db('migration')
         .where({ name })
         .update({ iteration })
-        .catch(()=>this.#db('migration').insert({ iteration,name }))
+        .then(affected=>{
+            if (affected == 0) return this
+                .#db('migration')
+                .insert({ iteration,name })
+        })
 
     async runMigrations({ entity = Entity, migrations=[async ()=>{}] }){
         const name = entity.name
@@ -30,7 +34,9 @@ export default class Migration{
 
         if (iteration >= listSize) return
 
-        for (let index = iteration; index < listSize; index++) await migrations[index]()
+        for (let index = iteration; index < listSize; index++) 
+            await migrations[index]()
+                    .catch(err=>console.log(err))
 
         await this.#update({ iteration:listSize,name })
     }

@@ -34,9 +34,13 @@ export default class Context{
         const migration = new Migration(this.#db)
 
         const promises = models.map(model=>
-            model.structMe(this.#db)
+            model
+                .structMe(this.#db)
                 .then(()=>migration
-                    .runMigrations({ entity: model, migrations: model.migrations(this.#db) })
+                    .runMigrations({ 
+                        entity: model, 
+                        migrations: model.migrations(this.#db) 
+                    })
                 )
         )        
 
