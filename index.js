@@ -365,19 +365,22 @@ class Migration{
         })
 
     async runMigrations({ entity = Entity, migrations=[async ()=>{}] }){
-        const name = entity.name;
+        try{
+            const name = entity.name;
 
-        const { iteration } = await this.#get({ name });
+            const { iteration } = await this.#get({ name });
 
-        const listSize = migrations.length;
+            const listSize = migrations.length;
 
-        if (iteration >= listSize) return
+            if (iteration >= listSize) return
 
-        for (let index = iteration; index < listSize; index++) 
-            await migrations[index]()
-                    .catch(err=>console.log(err));
+            migrations.forEach(async migration=> await migration());
 
-        await this.#update({ iteration:listSize,name });
+            await this.#update({ iteration:listSize,name });
+        } catch(err){
+            
+            console.error(err);
+        }
     }
 
     static structMe(db=knex()){
