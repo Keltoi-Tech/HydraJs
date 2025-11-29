@@ -35,11 +35,11 @@ export default class Migration{
 
             if (iteration >= listSize) return
 
-            migrations.forEach(async migration=> await migration());
+            for (let index = iteration; index < listSize; index++) await migrations[index]()
 
             await this.#update({ iteration:listSize,name })
         } catch(err){
-            
+
             console.error(err)
         }
     }
