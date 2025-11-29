@@ -19,26 +19,29 @@ export default class Migration{
         .#db('migration')
         .where({ name })
         .update({ iteration })
-
-    #create = ({ iteration=0,name='' })=>this
-        .#db('migration')
-        .insert({ iteration,name }) 
+        .then(affected=>{
+            if (affected == 0) return this
+                .#db('migration')
+                .insert({ iteration,name })
+        })
 
     async runMigrations({ entity = Entity, migrations=[async ()=>{}] }){
-        const name = entity.name
+        try{
+            const name = entity.name
 
-        const { iteration } = await this.#get({ name })
+            const { iteration } = await this.#get({ name })
 
-        const listSize = migrations.length
+            const listSize = migrations.length
 
-        if (iteration >= listSize) return
+            if (iteration >= listSize) return
 
-        for (let index = iteration; index < listSize; index++) {
-            await migrations[index]()
+            for (let index = iteration; index < listSize; index++) await migrations[index]()
+
+            await this.#update({ iteration:listSize,name })
+        } catch(err){
+
+            console.error(err)
         }
-
-        if (listSize === 1) await this.#create({ iteration:listSize,name })
-        else await this.#update({ iteration:listSize,name })
     }
 
     static structMe(db=knex()){
