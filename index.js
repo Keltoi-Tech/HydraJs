@@ -249,8 +249,8 @@ class Status extends Entity{
         )
     }
 
-    constructor({ id=1, description=''}){
-        super({ id }, { status:description });
+    constructor({ id=1, description='', data={}}){
+        super({ id }, { status:description, ...data });
     }
 
     get description(){ return this.data.status }
@@ -374,11 +374,11 @@ class Migration{
 
             if (iteration >= listSize) return
 
-            migrations.forEach(async migration=> await migration());
+            for (let index = iteration; index < listSize; index++) await migrations[index]();
 
             await this.#update({ iteration:listSize,name });
         } catch(err){
-            
+
             console.error(err);
         }
     }
@@ -785,7 +785,20 @@ class Service {
 
     get context(){return this.#context}    
 
-    handleError = (code,message)=>Promise.reject(new Result({code,message}))
+    handleError = (err)=>    (err instanceof Result)
+        ? Promise.reject(err)
+        : Promise.reject(
+            !!err.message
+                ? new Result({
+                    code:500,
+                    message:err.message
+                    })
+                : new Result({
+                    code:500,
+                    data:err,
+                    message:'Server error'
+                    })
+            )
     handleFailure = (err)=> this.handleError({code:500,message:err.message})
 }
 
