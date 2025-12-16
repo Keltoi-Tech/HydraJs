@@ -30,8 +30,8 @@ export default class Status extends Entity{
         )
     }
 
-    constructor({ id=1, description=''}){
-        super({ id }, { status:description })
+    constructor({ id=1, description='', data={}}){
+        super({ id }, { status:description, ...data })
     }
 
     get description(){ return this.data.status }
