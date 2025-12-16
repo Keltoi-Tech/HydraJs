@@ -785,20 +785,7 @@ class Service {
 
     get context(){return this.#context}    
 
-    handleError = (err)=>    (err instanceof Result)
-        ? Promise.reject(err)
-        : Promise.reject(
-            !!err.message
-                ? new Result({
-                    code:500,
-                    message:err.message
-                    })
-                : new Result({
-                    code:500,
-                    data:err,
-                    message:'Server error'
-                    })
-            )
+    handleError = (code,message)=>Promise.reject(new Result({code,message}))
     handleFailure = (err)=> this.handleError({code:500,message:err.message})
 }
 
