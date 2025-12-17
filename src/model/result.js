@@ -38,6 +38,22 @@ class Result {
             .status(this.#code)
             .json(this.#data)
     }
+
+    static createInstance = (err)=>
+        (err instanceof Result)
+            ? Promise.reject(err)
+            : Promise.reject(
+                !!err.message
+                    ? new Result({
+                        code:500,
+                        message:err.message
+                        })
+                    : new Result({
+                        code:500,
+                        data:err,
+                        message:'Server error'
+                        })
+                )
 }
 
 export default Result

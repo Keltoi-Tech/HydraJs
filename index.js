@@ -57,6 +57,22 @@ class Result {
             .status(this.#code)
             .json(this.#data);
     }
+
+    static createInstance = (err)=>
+        (err instanceof Result)
+            ? Promise.reject(err)
+            : Promise.reject(
+                !!err.message
+                    ? new Result({
+                        code:500,
+                        message:err.message
+                        })
+                    : new Result({
+                        code:500,
+                        data:err,
+                        message:'Server error'
+                        })
+                )
 }
 
 class Entity{
@@ -222,7 +238,7 @@ class Traceable extends Entity{
 }
 
 class Status extends Entity{
-    static build=({ id=1,description='' })=>new Status({id,description})
+    static build=({ id=1,description='',data={} })=>new Status({id,description,data})
 
     static structMe( 
         db=knex(), 
@@ -785,8 +801,7 @@ class Service {
 
     get context(){return this.#context}    
 
-    handleError = (code,message)=>Promise.reject(new Result({code,message}))
-    handleFailure = (err)=> this.handleError({code:500,message:err.message})
+    handleError = ({code,message})=> Promise.reject(new Result({code,message}))
 }
 
 class Handler {
@@ -800,9 +815,7 @@ class Handler {
     }
 
     handle(){}
-    handleError({ code, message }) {
-        return Promise.reject(new Result({ code, message }));
-    }
+    handleError = ({ code, message }) => Promise.reject(new Result({ code, message }));
 }
 
 let Context$1 = class Context{
