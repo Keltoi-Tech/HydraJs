@@ -107,7 +107,7 @@ class Entity{
         if(result.isError) return Promise.reject(result)
     }   
 
-    static collectionfromResult(result=new Result()){
+    static collectionFromResult(result=new Result()){
         if(result.isError) return Promise.reject(result)
     }
 }
@@ -204,15 +204,18 @@ class Linking{
 }
 
 class Traceable extends Entity{
+    #createdAt
     constructor({
         key={},
         struct={},
         createdAt=new Date()
     }){
-        super(key,{...struct,createdAt});
+        super(key,struct);
+
+        this.#createdAt = createdAt;
     } 
 
-    get createdAt(){ return this.data.createdAt }
+    get createdAt(){ return this.#createdAt }
 
     static structMe(
         db=knex(),
@@ -309,6 +312,10 @@ class Thing extends Entity{
 }
 
 class Changeable extends Entity{
+    #createdAt
+    #updatedAt  
+    #active
+
     constructor({
         key={},
         struct = {},
@@ -318,18 +325,23 @@ class Changeable extends Entity{
     }){
         super(
             key,
-            { 
-                ...struct,
-                createdAt,
-                updatedAt,
-                active
-            }
+            struct
         );
+
+        this.#createdAt = createdAt;
+        this.#updatedAt = updatedAt;
+        this.#active = active;
     }
 
-    get createdAt(){ return this.data.createdAt }
-    get updatedAt(){ return this.data.updatedAt }
-    get active(){ return this.data.active }
+    get createdAt(){ return this.createdAt }
+    get updatedAt(){ return this.updatedAt }
+    get active(){ return this.active }
+
+    get change(){
+        return {
+            updatedAt: this.updatedAt
+        }
+    }
 
     static structMe(
         db=knex(),
@@ -546,12 +558,50 @@ class ChangeableRepository extends Repository$1{
         super(entity,context);
     }
 
+    insert = (entity = new Changeable())=>
+        this.myContext()
+            .insert({
+                ...entity.$,
+                createdAt:entity.createdAt,
+                active:true
+            })
+            .then(()=>new Result({ data:entity }))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
+
+    create = (entity = new Changeable())=>
+        this.myContext()
+            .insert({
+                    ...entity.$,
+                    active:true
+                },
+                Object.keys(entity.key)
+            )
+            .then(ids=>{
+                entity.key = ids[0];
+
+                return new Result({ data:entity })
+            })
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
+
+    update = (entity = new Changeable())=>
+        this.myContext()
+            .where(entity.key)
+            .update({
+                ...entity.data,
+                updatedAt:new Date()
+            })
+            .then(affected=> affected > 0 
+                ? new Result({ code:200,data:`${this.name} updated` }) 
+                : new Result({ code:404,message:'Not found' })
+            )
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
+
     reactive = (entity = new Changeable())=>
         this.myContext()
             .where(entity.key)
             .update({
                 active:true, 
-                updatedAt:entity.updatedAt
+                updatedAt:new Date()
             })
             .then(affected=> affected > 0 
                 ? new Result({ code:200,data:`${this.name} updated` }) 
@@ -564,7 +614,7 @@ class ChangeableRepository extends Repository$1{
             .where(entity.key)
             .update({
                 active:false,
-                updatedAt:entity.updatedAt
+                updatedAt:new Date()
             })
             .then(affected=> affected > 0 
                 ? new Result({ code:200,data:`${this.name} updated` }) 
@@ -654,6 +704,31 @@ class TraceableRepository extends Repository$1{
             .select()
             .orderBy('createdAt',order)
             .then(result => new Result({data:result}))
+            .catch(err=>Promise.reject( new Result({code:500,message:err})) )
+
+    insert = (entity = new Traceable()) =>
+        this.myContext()
+            .insert({
+                ...entity.$,
+                createdAt:entity.createdAt
+            })
+            .then(()=>new Result({ data:entity }))
+            .catch(err=>Promise.reject( new Result({code:500,message:err})) )
+
+    create = (entity = new Traceable()) =>
+        this.myContext()
+            .insert(
+                {
+                    ...entity.$,
+                    createdAt:new Date()
+                },
+                Object.keys(entity.key)
+            )
+            .then(ids=>{
+                entity.key = ids[0];
+
+                return new Result({ data:entity })
+            })
             .catch(err=>Promise.reject( new Result({code:500,message:err})) )
 
     update = () => Promise.reject( new Result({code:400,message:'Cannot update a logged object'}) )

@@ -7,12 +7,50 @@ export default class ChangeableRepository extends Repository{
         super(entity,context)
     }
 
+    insert = (entity = new Changeable())=>
+        this.myContext()
+            .insert({
+                ...entity.$,
+                createdAt:entity.createdAt,
+                active:true
+            })
+            .then(()=>new Result({ data:entity }))
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
+
+    create = (entity = new Changeable())=>
+        this.myContext()
+            .insert({
+                    ...entity.$,
+                    active:true
+                },
+                Object.keys(entity.key)
+            )
+            .then(ids=>{
+                entity.key = ids[0]
+
+                return new Result({ data:entity })
+            })
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
+
+    update = (entity = new Changeable())=>
+        this.myContext()
+            .where(entity.key)
+            .update({
+                ...entity.data,
+                updatedAt:new Date()
+            })
+            .then(affected=> affected > 0 
+                ? new Result({ code:200,data:`${this.name} updated` }) 
+                : new Result({ code:404,message:'Not found' })
+            )
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
+
     reactive = (entity = new Changeable())=>
         this.myContext()
             .where(entity.key)
             .update({
                 active:true, 
-                updatedAt:entity.updatedAt
+                updatedAt:new Date()
             })
             .then(affected=> affected > 0 
                 ? new Result({ code:200,data:`${this.name} updated` }) 
@@ -25,7 +63,7 @@ export default class ChangeableRepository extends Repository{
             .where(entity.key)
             .update({
                 active:false,
-                updatedAt:entity.updatedAt
+                updatedAt:new Date()
             })
             .then(affected=> affected > 0 
                 ? new Result({ code:200,data:`${this.name} updated` }) 

@@ -3,15 +3,18 @@ import Entity from "./entity"
 import { runWhenFalse } from "../helper"
 
 export default class Traceable extends Entity{
+    #createdAt
     constructor({
         key={},
         struct={},
         createdAt=new Date()
     }){
-        super(key,{...struct,createdAt})
+        super(key,struct)
+
+        this.#createdAt = createdAt
     } 
 
-    get createdAt(){ return this.data.createdAt }
+    get createdAt(){ return this.#createdAt }
 
     static structMe(
         db=knex(),
