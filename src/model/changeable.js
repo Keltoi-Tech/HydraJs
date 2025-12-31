@@ -28,13 +28,13 @@ export default class Changeable extends Entity{
         this.#active = active
     }
 
-    get createdAt(){ return this.createdAt }
-    get updatedAt(){ return this.updatedAt }
-    get active(){ return this.active }
+    get createdAt(){ return this.#createdAt }
+    get updatedAt(){ return this.#updatedAt}
+    get active(){ return this.#active }
 
     get change(){
         return {
-            updatedAt: this.updatedAt
+            updatedAt: this.#updatedAt
         }
     }
 
