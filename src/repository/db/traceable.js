@@ -50,7 +50,7 @@ export default class TraceableRepository extends Repository{
         this.myContext()
             .insert(
                 {
-                    ...entity.$,
+                    ...entity.data,
                     createdAt:new Date()
                 },
                 Object.keys(entity.key)

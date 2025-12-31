@@ -571,7 +571,7 @@ class ChangeableRepository extends Repository$1{
     create = (entity = new Changeable())=>
         this.myContext()
             .insert({
-                    ...entity.$,
+                    ...entity.data,
                     active:true
                 },
                 Object.keys(entity.key)
@@ -719,7 +719,7 @@ class TraceableRepository extends Repository$1{
         this.myContext()
             .insert(
                 {
-                    ...entity.$,
+                    ...entity.data,
                     createdAt:new Date()
                 },
                 Object.keys(entity.key)

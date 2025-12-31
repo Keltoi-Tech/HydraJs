@@ -20,7 +20,7 @@ export default class ChangeableRepository extends Repository{
     create = (entity = new Changeable())=>
         this.myContext()
             .insert({
-                    ...entity.$,
+                    ...entity.data,
                     active:true
                 },
                 Object.keys(entity.key)
