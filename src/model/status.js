@@ -3,7 +3,7 @@ import Entity from "./entity"
 import { runWhenFalse } from "../helper"
 
 export default class Status extends Entity{
-    static build=({ id=1,description='' })=>new Status({id,description})
+    static build=({ id=1,description='',data={} })=>new Status({id,description,data})
 
     static structMe( 
         db=knex(), 

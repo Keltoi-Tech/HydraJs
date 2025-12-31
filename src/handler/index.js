@@ -12,7 +12,5 @@ export class Handler {
     }
 
     handle(){}
-    handleError({ code, message }) {
-        return Promise.reject(new Result({ code, message }));
-    }
+    handleError = ({ code, message }) => Promise.reject(new Result({ code, message }));
 }

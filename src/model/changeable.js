@@ -3,6 +3,10 @@ import Entity from "./entity"
 import { runWhenFalse } from "../helper"
 
 export default class Changeable extends Entity{
+    #createdAt
+    #updatedAt  
+    #active
+
     constructor({
         key={},
         struct = {},
@@ -12,18 +16,23 @@ export default class Changeable extends Entity{
     }){
         super(
             key,
-            { 
-                ...struct,
-                createdAt,
-                updatedAt,
-                active
-            }
+            struct
         )
+
+        this.#createdAt = createdAt
+        this.#updatedAt = updatedAt
+        this.#active = active
     }
 
-    get createdAt(){ return this.data.createdAt }
-    get updatedAt(){ return this.data.updatedAt }
-    get active(){ return this.data.active }
+    get createdAt(){ return this.createdAt }
+    get updatedAt(){ return this.updatedAt }
+    get active(){ return this.active }
+
+    get change(){
+        return {
+            updatedAt: this.updatedAt
+        }
+    }
 
     static structMe(
         db=knex(),

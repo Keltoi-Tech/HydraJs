@@ -33,7 +33,7 @@ export default class Entity{
         if(result.isError) return Promise.reject(result)
     }   
 
-    static collectionfromResult(result=new Result()){
+    static collectionFromResult(result=new Result()){
         if(result.isError) return Promise.reject(result)
     }
 }

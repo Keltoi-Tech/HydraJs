@@ -37,6 +37,31 @@ export default class TraceableRepository extends Repository{
             .then(result => new Result({data:result}))
             .catch(err=>Promise.reject( new Result({code:500,message:err})) )
 
+    insert = (entity = new Traceable()) =>
+        this.myContext()
+            .insert({
+                ...entity.$,
+                createdAt:entity.createdAt
+            })
+            .then(()=>new Result({ data:entity }))
+            .catch(err=>Promise.reject( new Result({code:500,message:err})) )
+
+    create = (entity = new Traceable()) =>
+        this.myContext()
+            .insert(
+                {
+                    ...entity.data,
+                    createdAt:new Date()
+                },
+                Object.keys(entity.key)
+            )
+            .then(ids=>{
+                entity.key = ids[0]
+
+                return new Result({ data:entity })
+            })
+            .catch(err=>Promise.reject( new Result({code:500,message:err})) )
+
     update = () => Promise.reject( new Result({code:400,message:'Cannot update a logged object'}) )
 
     delete = () => Promise.reject( new Result({code:400,message:'Cannot delete a logged object'}) )
