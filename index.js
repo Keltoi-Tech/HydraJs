@@ -212,7 +212,7 @@ class Traceable extends Entity{
     }){
         super(key,struct);
 
-        this.#createdAt = createdAt;
+        this.#createdAt = createdAt instanceof Date ? createdAt : new Date(createdAt);
     } 
 
     get createdAt(){ return this.#createdAt }
@@ -328,8 +328,12 @@ class Changeable extends Entity{
             struct
         );
 
-        this.#createdAt = createdAt;
-        this.#updatedAt = updatedAt;
+        this.#createdAt = createdAt instanceof Date ? createdAt : new Date(createdAt);
+        this.#updatedAt = updatedAt instanceof Date 
+            ? updatedAt 
+            : !!updatedAt
+                ? new Date(updatedAt)
+                : undefined;
         this.#active = active;
     }
 
