@@ -567,7 +567,7 @@ class ChangeableRepository extends Repository$1{
             .insert({
                 ...entity.$,
                 createdAt:entity.createdAt,
-                active:true
+                active:entity.active
             })
             .then(()=>new Result({ data:entity }))
             .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
@@ -576,6 +576,7 @@ class ChangeableRepository extends Repository$1{
         this.myContext()
             .insert({
                     ...entity.data,
+                    createdAt:new Date(),
                     active:true
                 },
                 Object.keys(entity.key)
@@ -630,25 +631,25 @@ class ChangeableRepository extends Repository$1{
         this.myContext()
             .where({active:false})
             .select()
-            .orderBy(['createdAt','updatedAt'],order)
+            .orderBy(['createdAt'],order)
             .then(result => new Result({data:result}))
             .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
     before = (date = new Date(), order = 'asc') =>
         this.myContext()
-            .where('createdAt','<',date.toISOString())
+            .where('createdAt','<',date)
             .where({active:true})
             .select()
-            .orderBy(['createdAt','updatedAt'],order)
+            .orderBy(['createdAt'],order)
             .then(result => new Result({data:result}))
-            .catch(err=>Promise.reject( new Result({code:500,message:err}) ))            
+            .catch(err=>Promise.reject( new Result({code:500,message:err}) )) 
 
     after = (date=new Date(), order = 'asc') =>
         this.myContext()
-            .where('createdAt','>',date.toISOString())
+            .where('createdAt','>',date)
             .where({active:true})
             .select()
-            .orderBy(['createdAt','updatedAt'],order)
+            .orderBy(['createdAt'],order)
             .then(result => new Result({data:result}))
             .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
@@ -656,7 +657,7 @@ class ChangeableRepository extends Repository$1{
         this.myContext()
             .where({active:true})
             .select()
-            .orderBy(['createdAt','updatedAt'],order)
+            .orderBy(['createdAt'],order)
             .then(result => new Result({data:result}))
             .catch(err=>Promise.reject( new Result({code:500,message:err}) ))
 
@@ -689,7 +690,7 @@ class TraceableRepository extends Repository$1{
 
     before = (date = new Date(), order = 'asc') =>
         this.myContext()
-            .where('createdAt','<',date.toISOString())
+            .where('createdAt','<',date)
             .select()
             .orderBy('createdAt',order)
             .then(result => new Result({data:result}))
@@ -697,7 +698,7 @@ class TraceableRepository extends Repository$1{
 
     after = (date = new Date(), order = 'asc') =>
         this.myContext()
-            .where('createdAt','>',date.toISOString())
+            .where('createdAt','>',date)
             .select()
             .orderBy('createdAt',order)
             .then(result => new Result({data:result}))

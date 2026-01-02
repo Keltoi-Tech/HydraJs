@@ -16,7 +16,7 @@ export default class TraceableRepository extends Repository{
 
     before = (date = new Date(), order = 'asc') =>
         this.myContext()
-            .where('createdAt','<',date.toISOString())
+            .where('createdAt','<',date)
             .select()
             .orderBy('createdAt',order)
             .then(result => new Result({data:result}))
@@ -24,7 +24,7 @@ export default class TraceableRepository extends Repository{
 
     after = (date = new Date(), order = 'asc') =>
         this.myContext()
-            .where('createdAt','>',date.toISOString())
+            .where('createdAt','>',date)
             .select()
             .orderBy('createdAt',order)
             .then(result => new Result({data:result}))
