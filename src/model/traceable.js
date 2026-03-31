@@ -11,7 +11,7 @@ export default class Traceable extends Entity{
     }){
         super(key,struct)
 
-        this.#createdAt = createdAt
+        this.#createdAt = createdAt instanceof Date ? createdAt : new Date(createdAt)
     } 
 
     get createdAt(){ return this.#createdAt }

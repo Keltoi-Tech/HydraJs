@@ -19,18 +19,22 @@ export default class Changeable extends Entity{
             struct
         )
 
-        this.#createdAt = createdAt
-        this.#updatedAt = updatedAt
+        this.#createdAt = createdAt instanceof Date ? createdAt : new Date(createdAt)
+        this.#updatedAt = updatedAt instanceof Date 
+            ? updatedAt 
+            : !!updatedAt
+                ? new Date(updatedAt)
+                : undefined
         this.#active = active
     }
 
-    get createdAt(){ return this.createdAt }
-    get updatedAt(){ return this.updatedAt }
-    get active(){ return this.active }
+    get createdAt(){ return this.#createdAt }
+    get updatedAt(){ return this.#updatedAt}
+    get active(){ return this.#active }
 
     get change(){
         return {
-            updatedAt: this.updatedAt
+            updatedAt: this.#updatedAt
         }
     }
 
