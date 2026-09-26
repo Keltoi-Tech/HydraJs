@@ -1,4 +1,5 @@
 import knex from 'knex';
+import jwt from 'jsonwebtoken';
 import axios from 'axios';
 
 var runWhenFalse = (
@@ -898,6 +899,51 @@ class Handler {
     handleError = ({ code, message }) => Promise.reject(new Result({ code, message }));
 }
 
+class JwtHandler {
+    #jwt
+    constructor({ jwt }){
+        this.#jwt = jwt;
+    }
+
+    #verifyJwt(token=''){
+        const { issuer, secret } = this.#jwt;
+        const bearer = token.split(' ')[1];
+
+        return jwt.verify(bearer,secret,{issuer})
+    }
+
+    #mustValidate(){
+        const { validate } = this.#jwt;
+
+        return !!validate && validate == 'true'
+    }
+
+    #verifyRole(access={feature:'',access:''},payload){
+        const permissions = payload.access[access.feature];
+
+        if (!permissions) return false
+
+        return permissions.includes(access.access)
+    }
+
+    async handle({ token='', access={feature:'',access:''} }){
+        try{
+            if (!this.#mustValidate()) return new Result({code:201})
+
+            const payload = this.#verifyJwt(token);
+
+            if (!payload) return new Result({code:401,message:'Unauthorized'})
+
+            if (!this.#verifyRole(access,payload)) return new Result({code:403,message:'Forbidden'})
+
+            return new Result({code:201})
+            
+        } catch (error) {
+            return new Result({code:401,message:'Unauthorized'})
+        }
+    }
+}
+
 let Context$1 = class Context{
     #http
 
@@ -1008,4 +1054,4 @@ const ApiRepository = Repository;
 const ApiContext = Context$1;
 const ApiRestfulRepository = RestfulRepository;
 
-export { ApiContext, ApiRepository, ApiRestfulRepository, Changeable, DbChangeableRepository, DbContext, DbLinked, DbRepository, DbThingRepository, DbTraceableRepository, Entity, Handler, Linking, Migration, Model, Result, Service, Status, Thing, Traceable, runWhenFalse, runWhenTrue };
+export { ApiContext, ApiRepository, ApiRestfulRepository, Changeable, DbChangeableRepository, DbContext, DbLinked, DbRepository, DbThingRepository, DbTraceableRepository, Entity, Handler, JwtHandler, Linking, Migration, Model, Result, Service, Status, Thing, Traceable, runWhenFalse, runWhenTrue };
